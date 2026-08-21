@@ -98,15 +98,22 @@ jobs:
           $cmake = "app/windows/flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt"
           if (Test-Path $cmake) {
             $content = Get-Content -Raw $cmake
+            $nl = [Environment]::NewLine
             if ($content -notmatch "CMP0175") {
-              $policy = "cmake_policy(SET CMP0175 OLD)`r`n"
+              $policy = "cmake_policy(SET CMP0175 OLD)" + $nl
               if ($content -match "(?m)^cmake_minimum_required\([^\r\n]+\)") {
-                $content = [regex]::Replace($content, "(?m)^(cmake_minimum_required\([^\r\n]+\))", "$1`r`n$policy", 1)
+                $content = [regex]::Replace($content, "(?m)^(cmake_minimum_required\([^\r\n]+\))", ('$1' + $nl + $policy), 1)
               } else {
                 $content = $policy + $content
               }
-              Set-Content -Path $cmake -Value $content -NoNewline
             }
+            $content = $content.Replace('COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""', 'COMMAND "${CMAKE_COMMAND}" -E tar xzf "${LIBMPV_ARCHIVE}"')
+            $content = $content.Replace('COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I', 'COMMAND "${CMAKE_COMMAND}" -E copy_directory "${LIBMPV_SRC}/include/mpv" "${LIBMPV_SRC}/mpv"')
+            $content = $content.Replace('COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q', 'COMMAND "${CMAKE_COMMAND}" -E remove_directory "${LIBMPV_SRC}/include"')
+            $content = $content.Replace('COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""', 'COMMAND "${CMAKE_COMMAND}" -E rename "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include"')
+            $content = $content.Replace('COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""', 'COMMAND "${CMAKE_COMMAND}" -E tar xzf "${ANGLE_ARCHIVE}"')
+            $content = [regex]::Replace($content, '(TARGET "\$\{PROJECT_NAME\}_(?:LIBMPV|ANGLE)_EXTRACT")\r?\n(\s*COMMAND)', ('$1' + $nl + '    POST_BUILD' + $nl + '$2'))
+            Set-Content -Path $cmake -Value $content -NoNewline
           }
 
       - name: Build Windows
