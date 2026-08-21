@@ -107,12 +107,19 @@ jobs:
                 $content = $policy + $content
               }
             }
-            $content = $content.Replace('COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""', 'COMMAND "${CMAKE_COMMAND}" -E tar xzf "${LIBMPV_ARCHIVE}"')
-            $content = $content.Replace('COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I', 'COMMAND "${CMAKE_COMMAND}" -E copy_directory "${LIBMPV_SRC}/include/mpv" "${LIBMPV_SRC}/mpv"')
-            $content = $content.Replace('COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q', 'COMMAND "${CMAKE_COMMAND}" -E remove_directory "${LIBMPV_SRC}/include"')
-            $content = $content.Replace('COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""', 'COMMAND "${CMAKE_COMMAND}" -E rename "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include"')
-            $content = $content.Replace('COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${ANGLE_ARCHIVE}\""', 'COMMAND "${CMAKE_COMMAND}" -E tar xzf "${ANGLE_ARCHIVE}"')
-            $content = [regex]::Replace($content, '(TARGET "\$\{PROJECT_NAME\}_(?:LIBMPV|ANGLE)_EXTRACT")\r?\n(\s*COMMAND)', ('$1' + $nl + '    POST_BUILD' + $nl + '$2'))
+            $libmpvReplacement = @'
+  file(ARCHIVE_EXTRACT INPUT "${LIBMPV_ARCHIVE}" DESTINATION "${LIBMPV_SRC}")
+  file(COPY "${LIBMPV_SRC}/include/mpv" DESTINATION "${LIBMPV_SRC}")
+  file(REMOVE_RECURSE "${LIBMPV_SRC}/include")
+  file(RENAME "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include")
+endif()
+'@
+            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_LIBMPV_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $libmpvReplacement.TrimEnd(), 1)
+            $angleReplacement = @'
+  file(ARCHIVE_EXTRACT INPUT "${ANGLE_ARCHIVE}" DESTINATION "${ANGLE_SRC}")
+endif()
+'@
+            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_ANGLE_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $angleReplacement.TrimEnd(), 1)
             Set-Content -Path $cmake -Value $content -NoNewline
           }
 
