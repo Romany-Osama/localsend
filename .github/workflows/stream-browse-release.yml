@@ -1,0 +1,157 @@
+name: Stream & Browse Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to create
+        required: true
+        default: v1.18.2-stream.1
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: "3.41.9"
+
+jobs:
+  build_android:
+    name: Build Android APKs
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Fetch dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build split APKs
+        working-directory: app
+        run: flutter build apk --release --split-per-abi
+
+      - name: Rename APKs
+        run: |
+          mkdir -p release-assets
+          cp app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-arm64.apk
+          cp app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-arm32.apk
+          cp app/build/app/outputs/flutter-apk/app-x86_64-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-x64.apk
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-browse-android
+          path: release-assets/*.apk
+          if-no-files-found: error
+
+  build_windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    steps:
+      - name: Enable long paths
+        shell: pwsh
+        run: git config --system core.longpaths true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Fetch dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build Windows
+        working-directory: app
+        run: flutter build windows --release
+
+      - name: Create portable Windows archive
+        shell: pwsh
+        run: |
+          $bundle = "app/build/windows/x64/runner/Release"
+          $archive = "release-assets/LocalSend-${{ inputs.release_tag }}-windows-x64-portable.zip"
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          Compress-Archive -Path "$bundle/*" -DestinationPath $archive -Force
+
+      - name: Build Windows installer EXE
+        shell: pwsh
+        run: |
+          $payload = Join-Path $env:RUNNER_TEMP "localsend-inno"
+          $result = Join-Path $env:RUNNER_TEMP "localsend-inno-result"
+          New-Item -ItemType Directory -Force -Path $payload, $result | Out-Null
+          Copy-Item -Path "app/build/windows/x64/runner/Release/*" -Destination $payload -Recurse
+          Copy-Item -Path "app/assets/packaging/logo.ico" -Destination $payload
+          Copy-Item -Path "support/build/windows/x64/*" -Destination $payload -Recurse
+          iscc /DSkipSignTool "/DPayloadDir=$payload" "/DResultDir=$result" support/scripts/compile_windows_exe-inno.iss
+          Copy-Item -Path "$result/localsend.exe" -Destination "release-assets/LocalSend-${{ inputs.release_tag }}-windows-x64.exe"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-browse-windows
+          path: release-assets/*
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: [build_android, build_windows]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: stream-browse-android
+          path: release-assets
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: stream-browse-windows
+          path: release-assets
+
+      - name: Write release notes
+        run: |
+          cat > RELEASE_NOTES.md <<'EOF'
+          # LocalSend Stream & Browse
+
+          This release is built from the `stream-browse` fork. It preserves LocalSend's original transfer features and adds LAN-only Stream & Browse with session approval, per-file approval, read-only temporary grants, HTTP Range streaming, and an in-app media player.
+
+          The Windows assets include a portable ZIP containing the complete Flutter Windows bundle and an installer EXE. The Android files are split APKs; choose the APK matching the device ABI, usually arm64 on modern phones.
+
+          File access is direct between devices on the same local network. The source device must remain online while streaming. This release is unsigned unless the repository owner adds signing credentials.
+          EOF
+
+      - name: Create release and upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ inputs.release_tag }}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "LocalSend Stream & Browse ${{ inputs.release_tag }}" \
+            --notes-file RELEASE_NOTES.md \
+            release-assets/*
