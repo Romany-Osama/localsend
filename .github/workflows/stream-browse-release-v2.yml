@@ -101,19 +101,19 @@ jobs:
                 $content = $policy + $content
               }
             }
-            $libmpvReplacement = @'
-            file(ARCHIVE_EXTRACT INPUT "${LIBMPV_ARCHIVE}" DESTINATION "${LIBMPV_SRC}")
-            file(COPY "${LIBMPV_SRC}/include/mpv" DESTINATION "${LIBMPV_SRC}")
-            file(REMOVE_RECURSE "${LIBMPV_SRC}/include")
-            file(RENAME "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include")
-            endif()
-            '@
-            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_LIBMPV_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $libmpvReplacement.TrimEnd(), 1)
-            $angleReplacement = @'
-            file(ARCHIVE_EXTRACT INPUT "${ANGLE_ARCHIVE}" DESTINATION "${ANGLE_SRC}")
-            endif()
-            '@
-            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_ANGLE_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $angleReplacement.TrimEnd(), 1)
+            $libmpvReplacement = @(
+              '  file(ARCHIVE_EXTRACT INPUT "${LIBMPV_ARCHIVE}" DESTINATION "${LIBMPV_SRC}")',
+              '  file(COPY "${LIBMPV_SRC}/include/mpv" DESTINATION "${LIBMPV_SRC}")',
+              '  file(REMOVE_RECURSE "${LIBMPV_SRC}/include")',
+              '  file(RENAME "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include")',
+              'endif()'
+            ) -join $nl
+            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_LIBMPV_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $libmpvReplacement, 1)
+            $angleReplacement = @(
+              '  file(ARCHIVE_EXTRACT INPUT "${ANGLE_ARCHIVE}" DESTINATION "${ANGLE_SRC}")',
+              'endif()'
+            ) -join $nl
+            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_ANGLE_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $angleReplacement, 1)
             Set-Content -Path $cmake -Value $content -NoNewline
           }
 
