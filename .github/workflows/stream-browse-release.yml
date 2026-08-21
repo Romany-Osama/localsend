@@ -27,7 +27,7 @@ jobs:
         working-directory: app/android
         run: |
           keytool -genkeypair -v -keystore stream-browse-release.jks -storepass android -alias stream-browse -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LocalSend Stream Browse, OU=Open Source, O=LocalSend, L=Unknown, S=Unknown, C=US"
-          printf 'storePassword=android\nkeyPassword=android\nkeyAlias=stream-browse\nstoreFile=stream-browse-release.jks\n' > key.properties
+          printf 'storePassword=android\nkeyPassword=android\nkeyAlias=stream-browse\nstoreFile=../stream-browse-release.jks\n' > key.properties
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -91,6 +91,23 @@ jobs:
       - name: Fetch dependencies
         working-directory: app
         run: flutter pub get
+
+      - name: Patch media_kit CMake policy for the hosted runner
+        shell: pwsh
+        run: |
+          $cmake = "app/windows/flutter/ephemeral/.plugin_symlinks/media_kit_libs_windows_video/windows/CMakeLists.txt"
+          if (Test-Path $cmake) {
+            $content = Get-Content -Raw $cmake
+            if ($content -notmatch "CMP0175") {
+              $policy = "cmake_policy(SET CMP0175 OLD)`r`n"
+              if ($content -match "(?m)^cmake_minimum_required\([^\r\n]+\)") {
+                $content = [regex]::Replace($content, "(?m)^(cmake_minimum_required\([^\r\n]+\))", "$1`r`n$policy", 1)
+              } else {
+                $content = $policy + $content
+              }
+              Set-Content -Path $cmake -Value $content -NoNewline
+            }
+          }
 
       - name: Build Windows
         working-directory: app
