@@ -1,0 +1,10 @@
+name: Stream & Browse Dispatch Test
+on: [workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Test
+        run: echo "workflow dispatch works"
