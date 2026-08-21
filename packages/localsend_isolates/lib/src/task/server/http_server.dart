@@ -99,6 +99,16 @@ class HttpServerService {
     await _requireServer().respondPrepareDownload(sessionId: sessionId, accept: accept);
   }
 
+  /// Answers a pending Stream & Browse session request.
+  Future<void> respondStreamSession({required String sessionId, required bool accept}) async {
+    await _requireServer().respondStreamSession(sessionId: sessionId, accept: accept);
+  }
+
+  /// Answers a pending Stream & Browse file request.
+  Future<void> respondStreamFile({required String requestId, required bool accept}) async {
+    await _requireServer().respondStreamFile(requestId: requestId, accept: accept);
+  }
+
   /// Answers a pending web file download with the source the file content should be
   /// read from (either a [path] or a [fileDescriptor]). The server streams the content.
   Future<void> respondFileDownload({

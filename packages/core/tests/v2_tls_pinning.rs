@@ -375,6 +375,7 @@ async fn test_client_without_cert_allowed_in_web_mode() {
         &server_identity,
         Some(WebConfig {
             send: None,
+            stream: None,
             upload: true,
             i18n: WebI18n::default(),
             pages: WebPages::default(),

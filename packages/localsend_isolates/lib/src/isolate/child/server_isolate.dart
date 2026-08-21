@@ -156,11 +156,26 @@ class HttpServerFileDownloadTargetTask implements BaseHttpServerTask {
 class HttpServerFailFileDownloadTask implements BaseHttpServerTask {
   final String sessionId;
   final String fileId;
-
   HttpServerFailFileDownloadTask({
     required this.sessionId,
     required this.fileId,
   });
+}
+
+/// Answers a pending Stream & Browse session request.
+class HttpServerStreamSessionDecisionTask implements BaseHttpServerTask {
+  final String sessionId;
+  final bool accept;
+
+  HttpServerStreamSessionDecisionTask({required this.sessionId, required this.accept});
+}
+
+/// Answers a pending Stream & Browse file request.
+class HttpServerStreamFileDecisionTask implements BaseHttpServerTask {
+  final String requestId;
+  final bool accept;
+
+  HttpServerStreamFileDecisionTask({required this.requestId, required this.accept});
 }
 
 /// A message sent from the server isolate to the main isolate.
@@ -322,6 +337,38 @@ class HttpServerWebFileDownloadEvent extends HttpServerEvent {
     required this.sessionId,
     required this.fileId,
     required this.file,
+  });
+}
+
+/// A remote device requests a read-only Stream & Browse session.
+/// Must be answered with [HttpServerService.respondStreamSession].
+class HttpServerStreamPrepareSessionEvent extends HttpServerEvent {
+  final String ip;
+  final String sessionId;
+  final String? userAgent;
+
+  HttpServerStreamPrepareSessionEvent({
+    required this.ip,
+    required this.sessionId,
+    required this.userAgent,
+  });
+}
+
+/// A remote device requests approval to read one selected file.
+/// Must be answered with [HttpServerService.respondStreamFile].
+class HttpServerStreamFileRequestEvent extends HttpServerEvent {
+  final String ip;
+  final String sessionId;
+  final String requestId;
+  final RsStreamEntry entry;
+  final String purpose;
+
+  HttpServerStreamFileRequestEvent({
+    required this.ip,
+    required this.sessionId,
+    required this.requestId,
+    required this.entry,
+    required this.purpose,
   });
 }
 
@@ -540,6 +587,24 @@ Future<void> setupHttpServerIsolate(
                       file: file,
                     ),
                   );
+                case RsServerEvent_StreamPrepareSession(:final ip, :final sessionId, :final userAgent):
+                  emit(
+                    HttpServerStreamPrepareSessionEvent(
+                      ip: ip,
+                      sessionId: sessionId,
+                      userAgent: userAgent,
+                    ),
+                  );
+                case RsServerEvent_StreamFileRequest(:final ip, :final sessionId, :final requestId, :final entry, :final purpose):
+                  emit(
+                    HttpServerStreamFileRequestEvent(
+                      ip: ip,
+                      sessionId: sessionId,
+                      requestId: requestId,
+                      entry: entry,
+                      purpose: purpose,
+                    ),
+                  );
                 case RsServerEvent_Show(:final args):
                   emit(HttpServerShowEvent(args: args));
                 case RsServerEvent_ListenerFailed(:final error):
@@ -603,6 +668,22 @@ Future<void> setupHttpServerIsolate(
               .failFileDownload(
                 sessionId: failTask.sessionId,
                 fileId: failTask.fileId,
+              );
+          return;
+        case HttpServerStreamSessionDecisionTask decisionTask:
+          await ref
+              .read(httpServerProvider)
+              .respondStreamSession(
+                sessionId: decisionTask.sessionId,
+                accept: decisionTask.accept,
+              );
+          return;
+        case HttpServerStreamFileDecisionTask decisionTask:
+          await ref
+              .read(httpServerProvider)
+              .respondStreamFile(
+                requestId: decisionTask.requestId,
+                accept: decisionTask.accept,
               );
           return;
       }

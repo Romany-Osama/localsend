@@ -85,6 +85,7 @@ impl App {
         }
         let web_config = WebConfig {
             send: None,
+            stream: None,
             upload: true,
             i18n: WebI18n::default(),
             pages: WebPages::default(),
@@ -124,6 +125,7 @@ impl App {
                 pin: None,
                 event_tx: self.web_tx.clone(),
             }),
+            stream: None,
             upload: false,
             i18n: WebI18n::default(),
             pages: WebPages::default(),

@@ -5,6 +5,7 @@ use crate::http::server::common::query::parse_query;
 use crate::http::server::common::response::{full_body, BoxedBody, JsonResponse};
 use crate::http::server::PeerIp;
 use crate::http::server::{AppState, RequestClientInfo};
+use crate::http::server::stream::StreamConfig;
 use crate::model::discovery::PROTOCOL_VERSION_V2;
 use crate::model::transfer::{FileContent, FileDto};
 use bytes::Bytes;
@@ -89,6 +90,9 @@ pub struct WebConfig {
     /// Enables web send (the download page): files offered for download by web browsers.
     /// `None` disables the download page and the download API.
     pub send: Option<WebSendConfig>,
+
+    /// Enables the optional read-only Stream & Browse API.
+    pub stream: Option<StreamConfig>,
 
     /// Serves the upload page so web browsers can upload files
     /// via the v2 `prepare-upload`/`upload` endpoints.

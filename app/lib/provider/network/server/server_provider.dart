@@ -14,7 +14,7 @@ import 'package:localsend_app/util/native/web_pages_loader.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/dto/multicast_dto.dart';
-import 'package:localsend_isolates/rust/api/server.dart' show WebI18n, WebParams, WebSendParams;
+import 'package:localsend_isolates/rust/api/server.dart' show StreamParams, StreamRootParams, WebI18n, WebParams, WebSendParams;
 import 'package:localsend_isolates/util/rust.dart';
 import 'package:logging/logging.dart';
 import 'package:refena_flutter/refena_flutter.dart';
@@ -74,6 +74,12 @@ class ServerService extends Notifier<ServerState?> {
   late final _sendController = SendController(_serverUtils);
 
   StreamSubscription<HttpServerEvent>? _subscription;
+  final Map<String, HttpServerStreamPrepareSessionEvent> pendingStreamSessions = {};
+  final Map<String, HttpServerStreamFileRequestEvent> pendingStreamFiles = {};
+  final StreamController<HttpServerEvent> _streamEvents = StreamController<HttpServerEvent>.broadcast();
+  List<StreamRootParams> _streamRoots = const [];
+
+  Stream<HttpServerEvent> get streamEvents => _streamEvents.stream;
 
   ServerService();
 
@@ -120,7 +126,10 @@ class ServerService extends Notifier<ServerState?> {
     WebSendState? webSendState,
     bool webUpload = false,
     String? webPin,
+    List<StreamRootParams>? streamRoots,
   }) async {
+    final effectiveStreamRoots = streamRoots ?? _streamRoots;
+    _streamRoots = List.unmodifiable(effectiveStreamRoots);
     if (state != null) {
       _logger.info('Server already running.');
       return null;
@@ -142,7 +151,7 @@ class ServerService extends Notifier<ServerState?> {
     _syncServerState(alias: alias, port: port, https: https, serverRunning: true, download: webSendState != null);
 
     final settings = ref.read(settingsProvider);
-    final webActive = webSendState != null || webUpload;
+    final webActive = webSendState != null || webUpload || effectiveStreamRoots.isNotEmpty;
     // Custom pages provided by the user next to the executable, if any.
     final customWebPages = webActive ? await loadCustomWebPages() : null;
     final events = ref
@@ -153,6 +162,7 @@ class ServerService extends Notifier<ServerState?> {
             verifyChecksums: settings.verifyChecksums,
             web: webActive
                 ? WebParams(
+                    stream: effectiveStreamRoots.isEmpty ? null : StreamParams(roots: effectiveStreamRoots),
                     send: webSendState != null
                         ? WebSendParams(
                             files: {
@@ -242,6 +252,31 @@ class ServerService extends Notifier<ServerState?> {
     return await startServerFromSettings();
   }
 
+  Future<void> setStreamRoots(List<StreamRootParams> roots) async {
+    final current = state;
+    if (current == null) {
+      final settings = ref.read(settingsProvider);
+      await startServer(
+        alias: settings.alias,
+        port: settings.port,
+        https: settings.https,
+        streamRoots: roots,
+      );
+      return;
+    }
+    await restartServer(
+      alias: current.alias,
+      port: current.port,
+      https: current.https,
+      webSendState: current.webSendState,
+      webUpload: current.webUpload,
+      webPin: current.webPin,
+      streamRoots: roots,
+    );
+  }
+
+  List<StreamRootParams> get streamRoots => List.unmodifiable(_streamRoots);
+
   Future<ServerState?> restartServer({
     required String alias,
     required int port,
@@ -249,9 +284,10 @@ class ServerService extends Notifier<ServerState?> {
     WebSendState? webSendState,
     bool webUpload = false,
     String? webPin,
+    List<StreamRootParams>? streamRoots,
   }) async {
     await stopServer();
-    return await startServer(alias: alias, port: port, https: https, webSendState: webSendState, webUpload: webUpload, webPin: webPin);
+    return await startServer(alias: alias, port: port, https: https, webSendState: webSendState, webUpload: webUpload, webPin: webPin, streamRoots: streamRoots);
   }
 
   Future<void> acceptFileRequest(Map<String, String> fileNameMap) async {
@@ -332,6 +368,34 @@ class ServerService extends Notifier<ServerState?> {
     _sendController.declineRequest(sessionId);
   }
 
+  void acceptStreamSession(String sessionId) {
+    if (pendingStreamSessions.remove(sessionId) == null) return;
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerStreamSessionDecisionAction(sessionId: sessionId, accept: true),
+    );
+  }
+
+  void declineStreamSession(String sessionId) {
+    if (pendingStreamSessions.remove(sessionId) == null) return;
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerStreamSessionDecisionAction(sessionId: sessionId, accept: false),
+    );
+  }
+
+  void acceptStreamFile(String requestId) {
+    if (pendingStreamFiles.remove(requestId) == null) return;
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerStreamFileDecisionAction(requestId: requestId, accept: true),
+    );
+  }
+
+  void declineStreamFile(String requestId) {
+    if (pendingStreamFiles.remove(requestId) == null) return;
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerStreamFileDecisionAction(requestId: requestId, accept: false),
+    );
+  }
+
   void _handleEvent(HttpServerEvent event) {
     switch (event) {
       case HttpServerStartedEvent():
@@ -362,6 +426,14 @@ class ServerService extends Notifier<ServerState?> {
       case HttpServerWebFileDownloadEvent():
         // ignore: discarded_futures
         _sendController.onFileDownload(event);
+      case HttpServerStreamPrepareSessionEvent():
+        pendingStreamSessions[event.sessionId] = event;
+        _streamEvents.add(event);
+        _logger.info('Stream session request from ${event.ip}');
+      case HttpServerStreamFileRequestEvent():
+        pendingStreamFiles[event.requestId] = event;
+        _streamEvents.add(event);
+        _logger.info('Stream file request from ${event.ip}: ${event.entry.name}');
       case HttpServerListenerFailedEvent():
         // ignore: discarded_futures
         _restartAfterListenerFailure(event.error);

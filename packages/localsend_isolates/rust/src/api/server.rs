@@ -8,14 +8,44 @@ use localsend::http::server::internal::{InternalConfig, InternalEvent};
 pub use localsend::http::server::v2::SessionEndReasonV2;
 use localsend::http::server::v2::{PrepareUploadDecisionV2, ServerEventV2};
 pub use localsend::http::server::web::{WebI18n, WebPages};
+use localsend::http::server::stream::{StreamConfig, StreamEvent, StreamRoot};
 use localsend::http::server::web::{WebConfig, WebSendConfig, WebSendEvent};
 use localsend::http::state::ClientInfo;
 use localsend::model::discovery::DeviceType;
 use localsend::model::discovery::ProtocolType;
 use localsend::model::transfer::{FileContent, FileDto};
+
+use localsend::http::server::stream::StreamEntry;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc, oneshot};
+
+#[derive(Clone, Debug)]
+pub struct RsStreamEntry {
+    pub root_id: String,
+    pub path: String,
+    pub name: String,
+    pub kind: String,
+    pub size: u64,
+    pub modified_at: Option<String>,
+    pub mime_type: String,
+    pub streamable: bool,
+}
+
+impl From<StreamEntry> for RsStreamEntry {
+    fn from(entry: StreamEntry) -> Self {
+        Self {
+            root_id: entry.root_id,
+            path: entry.path,
+            name: entry.name,
+            kind: entry.kind,
+            size: entry.size,
+            modified_at: entry.modified_at,
+            mime_type: entry.mime_type,
+            streamable: entry.streamable,
+        }
+    }
+}
 
 /// Events emitted by the HTTP server that must be handled by the application.
 ///
@@ -25,6 +55,7 @@ use tokio::sync::{Mutex, mpsc, oneshot};
 /// The `ip` of an event renders a link-local IPv6 peer as `fe80::1%3`,
 /// including the interface scope, which the Rust HTTP client accepts back as
 /// a host.
+#[frb(non_opaque)]
 pub enum RsServerEvent {
     /// A device registered itself via `POST /api/localsend/v2/register`.
     ///
@@ -90,6 +121,22 @@ pub enum RsServerEvent {
         file: FileDto,
     },
 
+    /// A remote device requests a read-only browsing session.
+    StreamPrepareSession {
+        ip: String,
+        session_id: String,
+        user_agent: Option<String>,
+    },
+
+    /// A remote device requests approval to read one selected file.
+    StreamFileRequest {
+        ip: String,
+        session_id: String,
+        request_id: String,
+        entry: RsStreamEntry,
+        purpose: String,
+    },
+
     /// Another application instance requested the running application to show itself
     /// via `POST /api/localsend/v2/show`.
     Show {
@@ -113,7 +160,10 @@ pub struct RsHttpServer {
     pending_decision: Mutex<Option<(String, oneshot::Sender<PrepareUploadDecisionV2>)>>,
     pending_uploads: Mutex<HashMap<(String, String), oneshot::Sender<FileUploadTarget>>>,
     web_event_rx: Mutex<Option<mpsc::Receiver<WebSendEvent>>>,
+    stream_event_rx: Mutex<Option<mpsc::Receiver<StreamEvent>>>,
     pending_download_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
+    pending_stream_session_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
+    pending_stream_file_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
     pending_downloads: Mutex<HashMap<(String, String), oneshot::Sender<FileContent>>>,
     internal_event_rx: Mutex<Option<mpsc::Receiver<InternalEvent>>>,
 }
@@ -146,6 +196,9 @@ static RUNNING_SERVER: Mutex<Option<Arc<ServerInstance>>> = Mutex::const_new(Non
 /// Configuration for the web pages served to browsers. When omitted, the web
 /// pages respond with 403 and only the v2 endpoints run.
 pub struct WebParams {
+    /// Enables the optional read-only Stream & Browse API.
+    pub stream: Option<StreamParams>,
+
     /// Enables web send (the download page): files offered for download by web
     /// browsers. `null` disables the download page and the download API.
     pub send: Option<WebSendParams>,
@@ -174,6 +227,18 @@ pub struct WebSendParams {
 
     /// Optional PIN that web clients must provide via the `pin` query parameter.
     pub pin: Option<String>,
+}
+
+/// Configuration for the read-only Stream & Browse API.
+pub struct StreamParams {
+    pub roots: Vec<StreamRootParams>,
+}
+
+/// A user-selected local root exposed to approved peers.
+pub struct StreamRootParams {
+    pub id: String,
+    pub name: String,
+    pub path: String,
 }
 
 /// Starts the HTTP server on the given port (IPv4 and IPv6).
@@ -211,7 +276,7 @@ pub async fn start_server(
     let (event_tx, event_rx) = mpsc::channel::<ServerEventV2>(16);
     let (stop_tx, stop_rx) = oneshot::channel::<()>();
 
-    let (web_config, web_event_rx) = match web {
+    let (web_config, web_event_rx, stream_event_rx) = match web {
         Some(web) => {
             let (send_config, web_event_rx) = match web.send {
                 Some(send) => {
@@ -225,15 +290,35 @@ pub async fn start_server(
                 }
                 None => (None, None),
             };
+            let (stream_config, stream_event_rx) = match web.stream {
+                Some(stream) => {
+                    let (stream_event_tx, stream_event_rx) = mpsc::channel::<StreamEvent>(16);
+                    let config = StreamConfig {
+                        roots: stream
+                            .roots
+                            .into_iter()
+                            .map(|root| StreamRoot {
+                                id: root.id,
+                                name: root.name,
+                                path: root.path.into(),
+                            })
+                            .collect(),
+                        event_tx: stream_event_tx,
+                    };
+                    (Some(config), Some(stream_event_rx))
+                }
+                None => (None, None),
+            };
             let config = WebConfig {
                 send: send_config,
+                stream: stream_config,
                 upload: web.upload,
                 i18n: web.i18n,
                 pages: web.pages.unwrap_or_default(),
             };
-            (Some(config), web_event_rx)
+            (Some(config), web_event_rx, stream_event_rx)
         }
-        None => (None, None),
+        None => (None, None, None),
     };
 
     let (internal_config, internal_event_rx) = match show_token {
@@ -281,7 +366,10 @@ pub async fn start_server(
         pending_decision: Mutex::new(None),
         pending_uploads: Mutex::new(HashMap::new()),
         web_event_rx: Mutex::new(web_event_rx),
+        stream_event_rx: Mutex::new(stream_event_rx),
         pending_download_decisions: Mutex::new(HashMap::new()),
+        pending_stream_session_decisions: Mutex::new(HashMap::new()),
+        pending_stream_file_decisions: Mutex::new(HashMap::new()),
         pending_downloads: Mutex::new(HashMap::new()),
         internal_event_rx: Mutex::new(internal_event_rx),
     })
@@ -302,6 +390,7 @@ impl RsHttpServer {
             return;
         };
         let mut web_event_rx = self.web_event_rx.lock().await.take();
+        let mut stream_event_rx = self.stream_event_rx.lock().await.take();
         let mut internal_event_rx = self.internal_event_rx.lock().await.take();
 
         let mut v2_open = true;
@@ -325,6 +414,15 @@ impl RsHttpServer {
                         }
                     }
                 }
+                event = recv_opt(&mut stream_event_rx) => {
+                    match event {
+                        Some(event) => self.handle_stream_event(&sink, event).await,
+                        None => {
+                            stream_event_rx = None;
+                            true
+                        }
+                    }
+                }
                 event = recv_opt(&mut internal_event_rx) => {
                     match event {
                         Some(InternalEvent::Show { args }) => {
@@ -343,7 +441,7 @@ impl RsHttpServer {
                 break;
             }
 
-            if !v2_open && web_event_rx.is_none() && internal_event_rx.is_none() {
+            if !v2_open && web_event_rx.is_none() && stream_event_rx.is_none() && internal_event_rx.is_none() {
                 break;
             }
         }
@@ -427,6 +525,54 @@ impl RsHttpServer {
                 .is_ok(),
             ServerEventV2::ListenerFailed { error } => {
                 sink.add(RsServerEvent::ListenerFailed { error }).is_ok()
+            }
+        }
+    }
+
+    /// Returns whether the sink is still open.
+    async fn handle_stream_event(
+        &self,
+        sink: &StreamSink<RsServerEvent>,
+        event: StreamEvent,
+    ) -> bool {
+        match event {
+            StreamEvent::PrepareSession {
+                ip,
+                session_id,
+                user_agent,
+                decision_tx,
+            } => {
+                self.pending_stream_session_decisions
+                    .lock()
+                    .await
+                    .insert(session_id.clone(), decision_tx);
+                sink.add(RsServerEvent::StreamPrepareSession {
+                    ip: ip.to_string(),
+                    session_id,
+                    user_agent,
+                })
+                .is_ok()
+            }
+            StreamEvent::FileRequest {
+                ip,
+                session_id,
+                request_id,
+                entry,
+                purpose,
+                decision_tx,
+            } => {
+                self.pending_stream_file_decisions
+                    .lock()
+                    .await
+                    .insert(request_id.clone(), decision_tx);
+                sink.add(RsServerEvent::StreamFileRequest {
+                    ip: ip.to_string(),
+                    session_id,
+                    request_id,
+                    entry: entry.into(),
+                    purpose,
+                })
+                .is_ok()
             }
         }
     }
@@ -608,6 +754,38 @@ impl RsHttpServer {
             .send(accept)
             .map_err(|_| anyhow::anyhow!("Prepare-download request already ended"))?;
 
+        Ok(())
+    }
+
+    /// Answers a pending stream session request.
+    pub async fn respond_stream_session(&self, session_id: String, accept: bool) -> anyhow::Result<()> {
+        let Some(decision_tx) = self
+            .pending_stream_session_decisions
+            .lock()
+            .await
+            .remove(&session_id)
+        else {
+            return Err(anyhow::anyhow!("No pending stream session request"));
+        };
+        decision_tx
+            .send(accept)
+            .map_err(|_| anyhow::anyhow!("Stream session request already ended"))?;
+        Ok(())
+    }
+
+    /// Answers a pending stream file request. The grant is read-only and temporary.
+    pub async fn respond_stream_file(&self, request_id: String, accept: bool) -> anyhow::Result<()> {
+        let Some(decision_tx) = self
+            .pending_stream_file_decisions
+            .lock()
+            .await
+            .remove(&request_id)
+        else {
+            return Err(anyhow::anyhow!("No pending stream file request"));
+        };
+        decision_tx
+            .send(accept)
+            .map_err(|_| anyhow::anyhow!("Stream file request already ended"))?;
         Ok(())
     }
 

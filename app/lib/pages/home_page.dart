@@ -9,6 +9,7 @@ import 'package:localsend_app/pages/home_page_controller.dart';
 import 'package:localsend_app/pages/tabs/receive_tab.dart';
 import 'package:localsend_app/pages/tabs/send_tab.dart';
 import 'package:localsend_app/pages/tabs/settings_tab.dart';
+import 'package:localsend_app/pages/tabs/stream_tab.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/util/native/cross_file_converters.dart';
 import 'package:localsend_app/widget/responsive_builder.dart';
@@ -17,6 +18,7 @@ import 'package:refena_flutter/refena_flutter.dart';
 enum HomeTab {
   receive(Icons.wifi),
   send(Icons.send),
+  stream(Icons.play_circle_outline),
   settings(Icons.settings)
   ;
 
@@ -30,6 +32,8 @@ enum HomeTab {
         return t.receiveTab.title;
       case HomeTab.send:
         return t.sendTab.title;
+      case HomeTab.stream:
+        return 'Stream';
       case HomeTab.settings:
         return t.settingsTab.title;
     }
@@ -145,6 +149,7 @@ class _HomePageState extends State<HomePage> with Refena {
                           children: const [
                             ReceiveTab(),
                             SendTab(),
+                            StreamTab(),
                             SettingsTab(),
                           ],
                         ),

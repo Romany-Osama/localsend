@@ -464,6 +464,56 @@ class IsolateHttpServerPrepareDownloadDecisionAction extends ReduxAction<Isolate
   }
 }
 
+/// Answers a pending Stream & Browse session request.
+class IsolateHttpServerStreamSessionDecisionAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  final String sessionId;
+  final bool accept;
+
+  IsolateHttpServerStreamSessionDecisionAction({required this.sessionId, required this.accept});
+
+  @override
+  ParentIsolateState reduce() {
+    final connection = state.httpServer;
+    if (connection == null) {
+      throw StateError('httpServer is not initialized');
+    }
+    connection.sendToIsolate(
+      SendToIsolateData(
+        syncState: null,
+        data: IsolateTask(
+          data: HttpServerStreamSessionDecisionTask(sessionId: sessionId, accept: accept),
+        ),
+      ),
+    );
+    return state;
+  }
+}
+
+/// Answers a pending Stream & Browse file request.
+class IsolateHttpServerStreamFileDecisionAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  final String requestId;
+  final bool accept;
+
+  IsolateHttpServerStreamFileDecisionAction({required this.requestId, required this.accept});
+
+  @override
+  ParentIsolateState reduce() {
+    final connection = state.httpServer;
+    if (connection == null) {
+      throw StateError('httpServer is not initialized');
+    }
+    connection.sendToIsolate(
+      SendToIsolateData(
+        syncState: null,
+        data: IsolateTask(
+          data: HttpServerStreamFileDecisionTask(requestId: requestId, accept: accept),
+        ),
+      ),
+    );
+    return state;
+  }
+}
+
 /// Answers a pending [HttpServerWebFileDownloadEvent] with the source the file
 /// content should be read from (either a [path] or a readable [fileDescriptor]).
 class IsolateHttpServerFileDownloadTargetAction extends ReduxAction<IsolateController, ParentIsolateState> {

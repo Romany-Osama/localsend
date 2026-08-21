@@ -120,6 +120,7 @@ async fn start_test_server(
         config.event_tx = web_event_tx;
         WebConfig {
             send: Some(config),
+            stream: None,
             upload: false,
             i18n: WebI18n::default(),
             pages: WebPages::default(),
@@ -315,6 +316,7 @@ async fn test_upload_page() {
         }),
         Some(WebConfig {
             send: None,
+            stream: None,
             upload: true,
             i18n: WebI18n::default(),
             pages: WebPages::default(),
@@ -372,6 +374,7 @@ async fn test_custom_web_pages() {
         }),
         Some(WebConfig {
             send: None,
+            stream: None,
             upload: true,
             i18n: WebI18n::default(),
             pages: WebPages {

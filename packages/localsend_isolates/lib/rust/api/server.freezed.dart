@@ -99,9 +99,10 @@ return cancelReceived(_that);case RsServerEvent_WebPrepareDownload():
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload():
 return webFileDownload(_that);case RsServerEvent_Show():
 return show_(_that);case RsServerEvent_ListenerFailed():
-return listenerFailed(_that);}
-}
-/// A variant of `map` that fallback to returning `null`.
+return listenerFailed(_that);default:
+throw StateError('Unhandled RsServerEvent variant');}
+	}
+	/// A variant of `map` that fallback to returning `null`.
 ///
 /// It is equivalent to doing:
 /// ```dart
@@ -185,9 +186,10 @@ return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDow
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload():
 return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show():
 return show_(_that.args);case RsServerEvent_ListenerFailed():
-return listenerFailed(_that.error);}
-}
-/// A variant of `when` that fallback to returning `null`
+return listenerFailed(_that.error);default:
+throw StateError('Unhandled RsServerEvent variant');}
+	}
+	/// A variant of `when` that fallback to returning `null`
 ///
 /// It is equivalent to doing:
 /// ```dart

@@ -111,6 +111,12 @@ abstract class RsHttpServer implements RustOpaqueInterface {
   /// Passing `true` accepts the download request, `false` declines it.
   Future<void> respondPrepareDownload({required String sessionId, required bool accept});
 
+  /// Answers a pending stream session request.
+  Future<void> respondStreamSession({required String sessionId, required bool accept});
+
+  /// Answers a pending stream file request. The grant is read-only and temporary.
+  Future<void> respondStreamFile({required String requestId, required bool accept});
+
   /// Answers the pending [RsServerEvent::PrepareUpload] event.
   ///
   /// Passing the accepted file IDs (a subset of the offered files) accepts the request.
@@ -167,6 +173,44 @@ class RegisterDtoV2 {
           port == other.port &&
           protocol == other.protocol &&
           download == other.download;
+}
+
+class RsStreamEntry {
+  final String rootId;
+  final String path;
+  final String name;
+  final String kind;
+  final BigInt size;
+  final String? modifiedAt;
+  final String mimeType;
+  final bool streamable;
+
+  const RsStreamEntry({
+    required this.rootId,
+    required this.path,
+    required this.name,
+    required this.kind,
+    required this.size,
+    this.modifiedAt,
+    required this.mimeType,
+    required this.streamable,
+  });
+
+  @override
+  int get hashCode => Object.hash(rootId, path, name, kind, size, modifiedAt, mimeType, streamable);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RsStreamEntry &&
+          rootId == other.rootId &&
+          path == other.path &&
+          name == other.name &&
+          kind == other.kind &&
+          size == other.size &&
+          modifiedAt == other.modifiedAt &&
+          mimeType == other.mimeType &&
+          streamable == other.streamable;
 }
 
 @freezed
@@ -246,6 +290,22 @@ sealed class RsServerEvent with _$RsServerEvent {
     required FileDto file,
   }) = RsServerEvent_WebFileDownload;
 
+  /// A remote device requests a read-only browsing session.
+  const factory RsServerEvent.streamPrepareSession({
+    required String ip,
+    required String sessionId,
+    String? userAgent,
+  }) = RsServerEvent_StreamPrepareSession;
+
+  /// A remote device requests approval to read one selected file.
+  const factory RsServerEvent.streamFileRequest({
+    required String ip,
+    required String sessionId,
+    required String requestId,
+    required RsStreamEntry entry,
+    required String purpose,
+  }) = RsServerEvent_StreamFileRequest;
+
   /// Another application instance requested the running application to show itself
   /// via `POST /api/localsend/v2/show`.
   const factory RsServerEvent.show_({
@@ -261,6 +321,30 @@ sealed class RsServerEvent with _$RsServerEvent {
     /// Description of the failure.
     required String error,
   }) = RsServerEvent_ListenerFailed;
+}
+
+class RsServerEvent_StreamPrepareSession extends RsServerEvent {
+  final String ip;
+  final String sessionId;
+  final String? userAgent;
+
+  const RsServerEvent_StreamPrepareSession({required this.ip, required this.sessionId, this.userAgent}) : super._();
+}
+
+class RsServerEvent_StreamFileRequest extends RsServerEvent {
+  final String ip;
+  final String sessionId;
+  final String requestId;
+  final RsStreamEntry entry;
+  final String purpose;
+
+  const RsServerEvent_StreamFileRequest({
+    required this.ip,
+    required this.sessionId,
+    required this.requestId,
+    required this.entry,
+    required this.purpose,
+  }) : super._();
 }
 
 enum SessionEndReasonV2 {
@@ -370,7 +454,44 @@ class WebPages {
 
 /// Configuration for the web pages served to browsers. When omitted, the web
 /// pages respond with 403 and only the v2 endpoints run.
+class StreamParams {
+  final List<StreamRootParams> roots;
+
+  const StreamParams({required this.roots});
+
+  @override
+  int get hashCode => Object.hashAll(roots);
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is StreamParams && _listEquals(roots, other.roots);
+}
+
+class StreamRootParams {
+  final String id;
+  final String name;
+  final String path;
+
+  const StreamRootParams({required this.id, required this.name, required this.path});
+
+  @override
+  int get hashCode => Object.hash(id, name, path);
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is StreamRootParams && id == other.id && name == other.name && path == other.path;
+}
+
+bool _listEquals<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 class WebParams {
+  /// Enables the optional read-only Stream & Browse API.
+  final StreamParams? stream;
+
   /// Enables web send (the download page): files offered for download by web
   /// browsers. `null` disables the download page and the download API.
   final WebSendParams? send;
@@ -389,6 +510,7 @@ class WebParams {
   final WebPages? pages;
 
   const WebParams({
+    this.stream,
     this.send,
     required this.upload,
     required this.i18N,
@@ -396,13 +518,14 @@ class WebParams {
   });
 
   @override
-  int get hashCode => send.hashCode ^ upload.hashCode ^ i18N.hashCode ^ pages.hashCode;
+  int get hashCode => Object.hash(stream, send, upload, i18N, pages);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is WebParams &&
           runtimeType == other.runtimeType &&
+          stream == other.stream &&
           send == other.send &&
           upload == other.upload &&
           i18N == other.i18N &&

@@ -3,6 +3,7 @@ pub mod internal;
 mod peer_ip;
 pub mod v2;
 pub mod v3;
+pub mod stream;
 pub mod web;
 
 pub use peer_ip::PeerIp;
@@ -10,6 +11,7 @@ pub use peer_ip::PeerIp;
 use crate::crypto::cert::{fingerprint_from_cert_der, public_key_from_cert_der};
 use crate::http::server::internal::{InternalConfig, InternalState};
 use crate::http::server::v2::ServerEventV2;
+use crate::http::server::stream::StreamState;
 use crate::http::server::web::{WebConfig, WebI18n, WebPages};
 use crate::http::state::ClientInfo;
 use common::client_cert_verifier::CustomClientCertVerifier;
@@ -74,6 +76,9 @@ pub struct AppState {
     /// State for serving the download page (web send).
     web: Option<Arc<WebPageState>>,
 
+    /// State for the optional read-only Stream & Browse API.
+    pub(crate) stream: Option<Arc<StreamState>>,
+
     /// Whether the upload page is served (when the download page is not active).
     web_upload: bool,
 
@@ -113,20 +118,22 @@ impl AppState {
             })
         });
 
-        let (web, web_upload, web_i18n, web_pages) = match web_config {
+        let (web, stream, web_upload, web_i18n, web_pages) = match web_config {
             Some(config) => (
                 config.send.map(|send| Arc::new(WebPageState::new(send))),
+                config.stream.map(|stream| Arc::new(StreamState::new(stream))),
                 config.upload,
                 Some(Arc::new(config.i18n)),
                 Arc::new(config.pages),
             ),
-            None => (None, false, None, Arc::new(WebPages::default())),
+            None => (None, None, false, None, Arc::new(WebPages::default())),
         };
         let internal = internal_config.map(|config| Arc::new(InternalState::new(config)));
 
         Self {
             info,
             web,
+            stream,
             web_upload,
             web_i18n,
             web_pages,
@@ -608,6 +615,24 @@ async fn handle_request_inner(mut req: Request<Incoming>) -> Result<Response<Box
         (&Method::GET, "/i18n.json") => web::i18n(&state),
         (&Method::POST, "/api/localsend/v2/prepare-download") => {
             web::prepare_download(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/stream/v1/session") => {
+            stream::prepare_session(req, state, client_info).await
+        }
+        (&Method::GET, "/api/localsend/stream/v1/roots") => {
+            stream::roots(req, state, client_info).await
+        }
+        (&Method::GET, "/api/localsend/stream/v1/entries") => {
+            stream::entries(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/stream/v1/file-request") => {
+            stream::file_request(req, state, client_info).await
+        }
+        (&Method::GET, "/api/localsend/stream/v1/stream") => {
+            stream::stream_file(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/stream/v1/session/revoke") => {
+            stream::revoke_session(req, state, client_info).await
         }
         (&Method::GET, "/api/localsend/v2/download") => {
             web::download(req, state, client_info).await
