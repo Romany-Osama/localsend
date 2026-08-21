@@ -1,6 +1,8 @@
 name: Stream & Browse Release
 
 on:
+  push:
+    branches: [stream-browse]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -14,6 +16,7 @@ permissions:
 
 env:
   FLUTTER_VERSION: "3.41.9"
+  RELEASE_TAG: ${{ inputs.release_tag || 'v1.18.2-stream.8' }}
 
 jobs:
   build_android:
@@ -57,7 +60,7 @@ jobs:
       - name: Rename APK
         run: |
           mkdir -p release-assets
-          cp app/build/app/outputs/flutter-apk/app-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-arm64.apk
+          cp app/build/app/outputs/flutter-apk/app-release.apk release-assets/LocalSend-${{ env.RELEASE_TAG }}-android-arm64.apk
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -131,7 +134,7 @@ endif()
         shell: pwsh
         run: |
           $bundle = "app/build/windows/x64/runner/Release"
-          $archive = "release-assets/LocalSend-${{ inputs.release_tag }}-windows-x64-portable.zip"
+          $archive = "release-assets/LocalSend-${{ env.RELEASE_TAG }}-windows-x64-portable.zip"
           New-Item -ItemType Directory -Force -Path release-assets | Out-Null
           Compress-Archive -Path "$bundle/*" -DestinationPath $archive -Force
 
@@ -145,7 +148,7 @@ endif()
           Copy-Item -Path "app/assets/packaging/logo.ico" -Destination $payload
           Copy-Item -Path "support/build/windows/x64/*" -Destination $payload -Recurse
           iscc /DSkipSignTool "/DPayloadDir=$payload" "/DResultDir=$result" support/scripts/compile_windows_exe-inno.iss
-          Copy-Item -Path "$result/localsend.exe" -Destination "release-assets/LocalSend-${{ inputs.release_tag }}-windows-x64.exe"
+          Copy-Item -Path "$result/localsend.exe" -Destination "release-assets/LocalSend-${{ env.RELEASE_TAG }}-windows-x64.exe"
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
@@ -187,8 +190,8 @@ endif()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ inputs.release_tag }}" \
+          gh release create "${{ env.RELEASE_TAG }}" \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "LocalSend Stream & Browse ${{ inputs.release_tag }}" \
+            --title "LocalSend Stream & Browse ${{ env.RELEASE_TAG }}" \
             --notes-file RELEASE_NOTES.md \
             release-assets/*
