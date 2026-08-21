@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:localsend_app/provider/network/nearby_devices_provider.dart';
 import 'package:localsend_app/provider/network/stream/stream_browse_client.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
+import 'package:localsend_app/util/native/pick_directory_path.dart';
 import 'package:localsend_isolates/model/device.dart';
 import 'package:localsend_isolates/rust/api/server.dart';
 import 'package:media_kit/media_kit.dart';
@@ -38,7 +38,7 @@ class StreamTab extends StatelessWidget {
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: () async {
-                      final path = await FilePicker.platform.getDirectoryPath(dialogTitle: 'اختيار مجلد للمشاركة');
+                      final path = await pickDirectoryPath();
                       if (path == null || !context.mounted) return;
                       await server.setStreamRoots([
                         ...server.streamRoots,
