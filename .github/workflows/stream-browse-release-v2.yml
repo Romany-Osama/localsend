@@ -119,7 +119,7 @@ jobs:
 
       - name: Build Windows
         working-directory: app
-        run: flutter build windows --release
+        run: flutter build windows --release --verbose
 
       - name: Create portable Windows archive
         shell: pwsh
