@@ -1,22 +1,13 @@
 name: Stream & Browse Release
 
-on:
-  push:
-    branches: [stream-browse]
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: Release tag to create
-        required: true
-        default: v1.18.2-stream.1
-        type: string
+on: [workflow_dispatch]
 
 permissions:
   contents: write
 
 env:
   FLUTTER_VERSION: "3.41.9"
-  RELEASE_TAG: ${{ inputs.release_tag || 'v1.18.2-stream.8' }}
+  RELEASE_TAG: v1.18.2-stream.8
 
 jobs:
   build_android:
@@ -95,6 +86,13 @@ jobs:
         working-directory: app
         run: flutter pub get
 
+      - name: Build MSIX helper required by Windows install
+        shell: pwsh
+        run: |
+          $makepri = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\makepri.exe' | Select-Object -Last 1
+          & $makepri.FullName new /pr support\build\msix\content /cf support\build\msix\priconfig.xml /mn support\build\msix\content\AppxManifest.xml /of support\build\msix\content\resources.pri /o
+          & 'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe' pack /o /d support\build\msix\content /nv /p app\windows\localsend_msix_helper.msix
+
       - name: Patch media_kit CMake policy for the hosted runner
         shell: pwsh
         run: |
@@ -110,25 +108,25 @@ jobs:
                 $content = $policy + $content
               }
             }
-            $libmpvReplacement = @'
-  file(ARCHIVE_EXTRACT INPUT "${LIBMPV_ARCHIVE}" DESTINATION "${LIBMPV_SRC}")
-  file(COPY "${LIBMPV_SRC}/include/mpv" DESTINATION "${LIBMPV_SRC}")
-  file(REMOVE_RECURSE "${LIBMPV_SRC}/include")
-  file(RENAME "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include")
-endif()
-'@
-            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_LIBMPV_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $libmpvReplacement.TrimEnd(), 1)
-            $angleReplacement = @'
-  file(ARCHIVE_EXTRACT INPUT "${ANGLE_ARCHIVE}" DESTINATION "${ANGLE_SRC}")
-endif()
-'@
-            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_ANGLE_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $angleReplacement.TrimEnd(), 1)
+            $libmpvReplacement = @(
+              '  file(ARCHIVE_EXTRACT INPUT "${LIBMPV_ARCHIVE}" DESTINATION "${LIBMPV_SRC}")',
+              '  file(COPY "${LIBMPV_SRC}/include/mpv" DESTINATION "${LIBMPV_SRC}")',
+              '  file(REMOVE_RECURSE "${LIBMPV_SRC}/include")',
+              '  file(RENAME "${LIBMPV_SRC}/mpv" "${LIBMPV_SRC}/include")',
+              'endif()'
+            ) -join $nl
+            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_LIBMPV_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $libmpvReplacement, 1)
+            $angleReplacement = @(
+              '  file(ARCHIVE_EXTRACT INPUT "${ANGLE_ARCHIVE}" DESTINATION "${ANGLE_SRC}")',
+              'endif()'
+            ) -join $nl
+            $content = [regex]::Replace($content, '(?ms)  add_custom_target\("\$\{PROJECT_NAME\}_ANGLE_EXTRACT" ALL\).*?  \)\r?\nendif\(\)', $angleReplacement, 1)
             Set-Content -Path $cmake -Value $content -NoNewline
           }
 
       - name: Build Windows
         working-directory: app
-        run: flutter build windows --release
+        run: flutter build windows --release --verbose
 
       - name: Create portable Windows archive
         shell: pwsh
