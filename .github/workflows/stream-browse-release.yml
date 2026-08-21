@@ -17,8 +17,9 @@ env:
 
 jobs:
   build_android:
-    name: Build Android APKs
+    name: Build Android APK
     runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,16 +50,14 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Build split APKs
+      - name: Build arm64 APK
         working-directory: app
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --target-platform android-arm64
 
-      - name: Rename APKs
+      - name: Rename APK
         run: |
           mkdir -p release-assets
-          cp app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-arm64.apk
-          cp app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-arm32.apk
-          cp app/build/app/outputs/flutter-apk/app-x86_64-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-x64.apk
+          cp app/build/app/outputs/flutter-apk/app-release.apk release-assets/LocalSend-${{ inputs.release_tag }}-android-arm64.apk
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -70,6 +69,7 @@ jobs:
   build_windows:
     name: Build Windows EXE
     runs-on: windows-2022
+    timeout-minutes: 45
     steps:
       - name: Enable long paths
         shell: pwsh
@@ -171,7 +171,7 @@ jobs:
 
           This release is built from the `stream-browse` fork. It preserves LocalSend's original transfer features and adds LAN-only Stream & Browse with session approval, per-file approval, read-only temporary grants, HTTP Range streaming, and an in-app media player.
 
-          The Windows assets include a portable ZIP containing the complete Flutter Windows bundle and an installer EXE. The Android files are split APKs; choose the APK matching the device ABI, usually arm64 on modern phones.
+          The Windows assets include a portable ZIP containing the complete Flutter Windows bundle and an installer EXE. The Android asset is an arm64 APK for modern Android phones and tablets.
 
           File access is direct between devices on the same local network. The source device must remain online while streaming. This release is unsigned unless the repository owner adds signing credentials.
           EOF
