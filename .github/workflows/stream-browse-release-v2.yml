@@ -1,7 +1,6 @@
 name: Stream & Browse Release v2
 
-on:
-  workflow_dispatch: {}
+on: [workflow_dispatch]
 
 permissions:
   contents: write
