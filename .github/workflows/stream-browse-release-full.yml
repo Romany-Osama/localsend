@@ -133,7 +133,7 @@ jobs:
       - name: Build Debian package
         run: |
           dart pub global activate flutter_distributor
-          PATH="$HOME/.pub-cache/bin:$PATH" flutter_distributor package --platform linux --targets deb --working-directory app
+          (cd app && PATH="$HOME/.pub-cache/bin:$PATH" flutter_distributor package --platform linux --targets deb)
           deb_path=$(find app/dist -type f -name '*.deb' -print -quit)
           test -n "$deb_path"
           cp "$deb_path" release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-x64.deb
@@ -205,7 +205,7 @@ jobs:
       - name: Build Debian arm64 package
         run: |
           dart pub global activate flutter_distributor
-          PATH="$HOME/.pub-cache/bin:$PATH" flutter_distributor package --platform linux --targets deb --working-directory app
+          (cd app && PATH="$HOME/.pub-cache/bin:$PATH" flutter_distributor package --platform linux --targets deb)
           deb_path=$(find app/dist -type f -name '*.deb' -print -quit)
           test -n "$deb_path"
           cp "$deb_path" release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-arm64.deb
@@ -333,7 +333,12 @@ jobs:
 
       - name: Build macOS
         working-directory: app
-        run: flutter build macos --release --no-codesign
+        run: |
+          flutter build macos --release
+        env:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+          CODE_SIGN_IDENTITY: ""
 
       - name: Archive macOS app
         run: |
