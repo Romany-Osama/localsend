@@ -9,6 +9,7 @@ import 'package:localsend_app/provider/http_provider.dart';
 import 'package:localsend_app/provider/network/home_hub/home_hub_client.dart';
 import 'package:localsend_app/provider/network/nearby_devices_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
+import 'package:localsend_app/provider/network/send_provider.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/device.dart';
@@ -766,23 +767,13 @@ class HomeHubBroadcastPage extends StatefulWidget {
 }
 
 class _HomeHubBroadcastPageState extends State<HomeHubBroadcastPage> {
-  final _offerId = const Uuid().v4();
   final Map<String, HomeHubDeliveryStatus> _statuses = {};
   bool _sending = false;
 
   Future<void> _sendOffer() async {
     if (_sending) return;
     final ref = context.ref;
-    final self = ref.read(deviceFullInfoProvider);
     final nearby = ref.read(nearbyDevicesProvider);
-    final files = [
-      for (var index = 0; index < widget.files.length; index++)
-        {
-          'fileId': '$_offerId-$index',
-          'name': widget.files[index].name,
-          'size': widget.files[index].size,
-        },
-    ];
     final recipients = <({HomeHubMember member, Device? device})>[];
     for (final member in widget.group.members) {
       if (member.deviceId == widget.selfDeviceId || member.isExpired) continue;
@@ -806,17 +797,13 @@ class _HomeHubBroadcastPageState extends State<HomeHubBroadcastPage> {
       final device = recipient.device;
       if (device == null) continue;
       try {
-        final result = await HomeHubClient(clients: ref.read(httpProvider), device: device).sendTransferOffer(
-          offerId: _offerId,
-          groupId: widget.group.id,
-          senderDeviceId: self.fingerprint,
-          senderAlias: self.alias,
-          files: files,
-        );
+        await ref.notifier(sendProvider).startSession(
+              target: device,
+              files: widget.files,
+              background: true,
+            );
         if (!mounted) return;
-        setState(() {
-          _statuses[recipient.member.deviceId] = result.accepted ? HomeHubDeliveryStatus.accepted : HomeHubDeliveryStatus.rejected;
-        });
+        setState(() => _statuses[recipient.member.deviceId] = HomeHubDeliveryStatus.completed);
       } catch (_) {
         if (!mounted) return;
         setState(() => _statuses[recipient.member.deviceId] = HomeHubDeliveryStatus.failed);
@@ -877,11 +864,11 @@ class _HomeHubBroadcastPageState extends State<HomeHubBroadcastPage> {
           FilledButton.icon(
             onPressed: _sending ? null : _sendOffer,
             icon: _sending ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send),
-            label: Text(_sending ? 'في انتظار قرارات الأجهزة…' : 'إرسال عرض مستقل لكل جهاز'),
+            label: Text(_sending ? 'في انتظار قرارات الأجهزة…' : 'بدء إرسال مستقل لكل جهاز'),
           ),
           const SizedBox(height: 8),
           const Text(
-            'هذه الخطوة ترسل metadata والعرض عبر LAN/mTLS فقط. بعد قبول العرض، سيُعاد استخدام مسار نقل LocalSend الأصلي لجسم الملفات في المرحلة التالية؛ لا يتم رفع الملفات إلى Internet.',
+            'يُعاد استخدام مسار نقل LocalSend الأصلي لكل عضو، لذلك يظهر طلب موافقة مستقل ويُرسل جسم الملفات مباشرة عبر LAN فقط؛ لا يتم رفع الملفات إلى Internet.',
             style: TextStyle(fontSize: 12),
           ),
         ],
