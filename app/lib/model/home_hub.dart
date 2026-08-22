@@ -350,3 +350,53 @@ class HomeHubOutboxItem {
     );
   }
 }
+
+
+enum HomeHubActivityKind {
+  groupCreated,
+  groupDeleted,
+  inviteSent,
+  inviteAccepted,
+  inviteDeclined,
+  memberRemoved,
+  messageSent,
+  messageReceived,
+  transferOffered,
+  transferAccepted,
+  transferRejected,
+  guestExpired,
+  revokedAll,
+}
+
+class HomeHubActivityEntry {
+  final String id;
+  final HomeHubActivityKind kind;
+  final String detail;
+  final DateTime createdAt;
+
+  const HomeHubActivityEntry({
+    required this.id,
+    required this.kind,
+    required this.detail,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'kind': kind.name,
+        'detail': detail,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+      };
+
+  factory HomeHubActivityEntry.fromJson(Map<String, dynamic> json) {
+    return HomeHubActivityEntry(
+      id: _requiredString(json['id'], 'activity id'),
+      kind: HomeHubActivityKind.values.firstWhere(
+        (value) => value.name == json['kind'],
+        orElse: () => HomeHubActivityKind.messageReceived,
+      ),
+      detail: _requiredString(json['detail'], 'activity detail'),
+      createdAt: _requiredDateTime(json['createdAt'], 'activity createdAt'),
+    );
+  }
+}

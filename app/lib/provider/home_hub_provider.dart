@@ -12,12 +12,14 @@ class HomeHubState {
   final List<HomeHubInvite> invites;
   final List<HomeHubChatMessage> messages;
   final List<HomeHubOutboxItem> outbox;
+  final List<HomeHubActivityEntry> activity;
 
   const HomeHubState({
     required this.groups,
     required this.invites,
     required this.messages,
     required this.outbox,
+    required this.activity,
   });
 
   HomeHubState copyWith({
@@ -25,12 +27,14 @@ class HomeHubState {
     List<HomeHubInvite>? invites,
     List<HomeHubChatMessage>? messages,
     List<HomeHubOutboxItem>? outbox,
+    List<HomeHubActivityEntry>? activity,
   }) {
     return HomeHubState(
       groups: List.unmodifiable(groups ?? this.groups),
       invites: List.unmodifiable(invites ?? this.invites),
       messages: List.unmodifiable(messages ?? this.messages),
       outbox: List.unmodifiable(outbox ?? this.outbox),
+      activity: List.unmodifiable(activity ?? this.activity),
     );
   }
 }
@@ -63,7 +67,8 @@ class HomeHubService extends ReduxNotifier<HomeHubState> {
         .getHomeHubOutbox()
         .where((item) => item.message.id.trim().isNotEmpty && item.recipientDeviceId.trim().isNotEmpty)
         .toList();
-    return HomeHubState(groups: groups, invites: invites, messages: messages, outbox: outbox);
+    final activity = _persistence.getHomeHubActivity();
+    return HomeHubState(groups: groups, invites: invites, messages: messages, outbox: outbox, activity: activity);
   }
 
   Future<HomeHubState> persist(HomeHubState next) async {
@@ -71,6 +76,7 @@ class HomeHubService extends ReduxNotifier<HomeHubState> {
     await _persistence.setHomeHubInvites(next.invites);
     await _persistence.setHomeHubMessages(next.messages);
     await _persistence.setHomeHubOutbox(next.outbox);
+    await _persistence.setHomeHubActivity(next.activity);
     return next;
   }
 }
@@ -108,7 +114,16 @@ class CreateHomeHubGroupAction extends AsyncReduxAction<HomeHubService, HomeHubS
         ),
       ],
     );
-    return notifier.persist(state.copyWith(groups: [...state.groups, group]));
+    final activity = [
+      ...state.activity,
+      HomeHubActivityEntry(
+        id: const Uuid().v4(),
+        kind: HomeHubActivityKind.groupCreated,
+        detail: 'تم إنشاء الجروب ${group.name}',
+        createdAt: now,
+      ),
+    ];
+    return notifier.persist(state.copyWith(groups: [...state.groups, group], activity: activity));
   }
 }
 
@@ -331,7 +346,16 @@ class AddHomeHubChatMessageAction extends AsyncReduxAction<HomeHubService, HomeH
     if (message.id.trim().isEmpty || message.groupId.trim().isEmpty || message.text.trim().isEmpty) return state;
     if (state.messages.any((item) => item.id == message.id)) return state;
     final messages = [...state.messages, message]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return notifier.persist(state.copyWith(messages: messages));
+    final activity = [
+      ...state.activity,
+      HomeHubActivityEntry(
+        id: const Uuid().v4(),
+        kind: HomeHubActivityKind.messageReceived,
+        detail: 'رسالة واردة من ${message.senderAlias}',
+        createdAt: DateTime.now(),
+      ),
+    ];
+    return notifier.persist(state.copyWith(messages: messages, activity: activity));
   }
 }
 
@@ -345,12 +369,21 @@ class EnqueueHomeHubChatMessageAction extends AsyncReduxAction<HomeHubService, H
   Future<HomeHubState> reduce() async {
     if (message.id.trim().isEmpty || message.groupId.trim().isEmpty || message.text.trim().isEmpty) return state;
     final messages = state.messages.any((item) => item.id == message.id) ? [...state.messages] : [...state.messages, message];
+    final activity = [
+      ...state.activity,
+      HomeHubActivityEntry(
+        id: const Uuid().v4(),
+        kind: HomeHubActivityKind.messageSent,
+        detail: 'رسالة صادرة إلى ${deliveries.length} جهاز',
+        createdAt: DateTime.now(),
+      ),
+    ];
     final outbox = [...state.outbox];
     for (final delivery in deliveries) {
       if (delivery.recipientDeviceId.trim().isEmpty || outbox.any((item) => item.message.id == message.id && item.recipientDeviceId == delivery.recipientDeviceId)) continue;
       outbox.add(delivery);
     }
-    return notifier.persist(state.copyWith(messages: messages, outbox: outbox));
+    return notifier.persist(state.copyWith(messages: messages, outbox: outbox, activity: activity));
   }
 }
 
@@ -368,5 +401,55 @@ class UpdateHomeHubOutboxItemAction extends AsyncReduxAction<HomeHubService, Hom
       return item.copyWith(status: status, attempts: item.attempts + 1, updatedAt: DateTime.now());
     }).toList();
     return notifier.persist(state.copyWith(outbox: outbox));
+  }
+}
+
+
+class AddHomeHubActivityAction extends AsyncReduxAction<HomeHubService, HomeHubState> {
+  final HomeHubActivityKind kind;
+  final String detail;
+
+  AddHomeHubActivityAction({required this.kind, required this.detail});
+
+  @override
+  Future<HomeHubState> reduce() async {
+    final entry = HomeHubActivityEntry(
+      id: const Uuid().v4(),
+      kind: kind,
+      detail: detail.trim().isEmpty ? kind.name : detail.trim(),
+      createdAt: DateTime.now(),
+    );
+    final activity = [...state.activity, entry];
+    if (activity.length > 500) activity.removeRange(0, activity.length - 500);
+    return notifier.persist(state.copyWith(activity: activity));
+  }
+}
+
+class RevokeAllHomeHubAccessAction extends AsyncReduxAction<HomeHubService, HomeHubState> {
+  @override
+  Future<HomeHubState> reduce() async {
+    final groups = state.groups.map((group) {
+      final members = group.members.where((member) {
+        return member.role != HomeHubRole.guest || member.deviceId == group.ownerDeviceId;
+      }).toList();
+      return group.copyWith(members: members);
+    }).toList();
+    final invites = state.invites.map((invite) {
+      return invite.status == HomeHubInviteStatus.pending ? invite.copyWith(status: HomeHubInviteStatus.revoked) : invite;
+    }).toList();
+    final outbox = state.outbox.map((item) {
+      final active = item.status == HomeHubDeliveryStatus.pending || item.status == HomeHubDeliveryStatus.transferring;
+      return active ? item.copyWith(status: HomeHubDeliveryStatus.failed, updatedAt: DateTime.now()) : item;
+    }).toList();
+    final activity = [
+      ...state.activity,
+      HomeHubActivityEntry(
+        id: const Uuid().v4(),
+        kind: HomeHubActivityKind.revokedAll,
+        detail: 'تم إلغاء كل دعوات وضيوف Home Hub على هذا الجهاز',
+        createdAt: DateTime.now(),
+      ),
+    ];
+    return notifier.persist(state.copyWith(groups: groups, invites: invites, outbox: outbox, activity: activity));
   }
 }

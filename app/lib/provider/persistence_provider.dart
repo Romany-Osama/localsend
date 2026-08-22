@@ -102,6 +102,7 @@ const _homeHubGroups = 'ls_home_hub_groups';
 const _homeHubInvites = 'ls_home_hub_invites';
 const _homeHubMessages = 'ls_home_hub_messages';
 const _homeHubOutbox = 'ls_home_hub_outbox';
+const _homeHubActivity = 'ls_home_hub_activity';
 
 final persistenceProvider = Provider<PersistenceService>((ref) {
   throw Exception('persistenceProvider not initialized');
@@ -349,6 +350,24 @@ class PersistenceService {
   Future<void> setHomeHubOutbox(List<HomeHubOutboxItem> items) async {
     final raw = items.map((item) => jsonEncode(item.toJson())).toList();
     await _prefs.setStringList(_homeHubOutbox, raw);
+  }
+
+  List<HomeHubActivityEntry> getHomeHubActivity() {
+    final raw = _prefs.getStringList(_homeHubActivity) ?? [];
+    final entries = <HomeHubActivityEntry>[];
+    for (final entry in raw) {
+      try {
+        entries.add(HomeHubActivityEntry.fromJson(jsonDecode(entry) as Map<String, dynamic>));
+      } on Object {
+        // Ignore malformed data from an interrupted write.
+      }
+    }
+    return entries;
+  }
+
+  Future<void> setHomeHubActivity(List<HomeHubActivityEntry> entries) async {
+    final raw = entries.map((entry) => jsonEncode(entry.toJson())).toList();
+    await _prefs.setStringList(_homeHubActivity, raw);
   }
 
   String getShowToken() {

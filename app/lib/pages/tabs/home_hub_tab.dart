@@ -18,6 +18,25 @@ import 'package:uuid/uuid.dart';
 class HomeHubTab extends StatelessWidget {
   const HomeHubTab({super.key});
 
+  Future<void> _revokeAll(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('إلغاء كل صلاحيات Home Hub؟'),
+        content: const Text('سيتم إلغاء الدعوات المعلقة وإزالة كل أعضاء guest وتعليم العروض المعلقة كملغاة على هذا الجهاز.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('رجوع')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('إلغاء الكل')),
+        ],
+      ),
+    );
+    if (confirm != true || !context.mounted) return;
+    await context.ref.redux(homeHubProvider).dispatchAsync(RevokeAllHomeHubAccessAction());
+    if (!context.mounted) return;
+    context.ref.notifier(serverProvider).syncHomeHubGroups();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إلغاء صلاحيات Home Hub المحلية')));
+  }
+
   Future<void> _createGroup(BuildContext context) async {
     final nameController = TextEditingController();
     final name = await showDialog<String>(
@@ -76,6 +95,11 @@ class HomeHubTab extends StatelessWidget {
         title: const Text('Home Hub'),
         actions: [
           IconButton(
+            tooltip: 'إلغاء كل صلاحيات Home Hub',
+            onPressed: () => _revokeAll(context),
+            icon: const Icon(Icons.gpp_bad_outlined),
+          ),
+          IconButton(
             tooltip: 'إنشاء جروب',
             onPressed: () => _createGroup(context),
             icon: const Icon(Icons.group_add),
@@ -129,6 +153,12 @@ class HomeHubTab extends StatelessWidget {
             const SizedBox(height: 8),
             for (final invite in pendingInvites) _InviteCard(invite: invite, self: self),
           ],
+          if (state.activity.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('سجل النشاط المحلي', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            _HomeHubActivityPanel(entries: state.activity),
+          ],
           const SizedBox(height: 16),
           Text('جروباتي', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -145,6 +175,30 @@ class HomeHubTab extends StatelessWidget {
                 group: group,
                 selfDeviceId: self.fingerprint,
               ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeHubActivityPanel extends StatelessWidget {
+  final List<HomeHubActivityEntry> entries;
+
+  const _HomeHubActivityPanel({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = entries.reversed.take(8).toList(growable: false);
+    return Card(
+      child: Column(
+        children: [
+          for (final entry in recent)
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.history),
+              title: Text(entry.detail),
+              subtitle: Text(entry.createdAt.toLocal().toString()),
+            ),
         ],
       ),
     );
@@ -520,6 +574,20 @@ class HomeHubGroupPage extends StatelessWidget {
 
   const HomeHubGroupPage({required this.group, required this.selfDeviceId, super.key});
 
+  Future<HomeHubRole?> _chooseInviteRole(BuildContext context) async {
+    return showDialog<HomeHubRole>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('صلاحية الجهاز'),
+        children: [
+          SimpleDialogOption(onPressed: () => Navigator.of(context).pop(HomeHubRole.viewer), child: const Text('Viewer — مشاهدة واستقبال بعد الموافقة')),
+          SimpleDialogOption(onPressed: () => Navigator.of(context).pop(HomeHubRole.sender), child: const Text('Sender — إرسال أيضًا')),
+          SimpleDialogOption(onPressed: () => Navigator.of(context).pop(HomeHubRole.guest), child: const Text('Guest — صلاحية مؤقتة 24 ساعة')),
+        ],
+      ),
+    );
+  }
+
   Future<void> _inviteDevice(BuildContext context) async {
     final nearby = context.ref.read(nearbyDevicesProvider);
     final candidates = nearby.devices.values
@@ -545,6 +613,8 @@ class HomeHubGroupPage extends StatelessWidget {
       ),
     );
     if (device == null || !context.mounted) return;
+    final role = await _chooseInviteRole(context);
+    if (role == null || !context.mounted) return;
 
     final self = context.ref.read(deviceFullInfoProvider);
     final invite = HomeHubInvite.create(
@@ -552,7 +622,8 @@ class HomeHubGroupPage extends StatelessWidget {
       groupName: group.name,
       inviterDeviceId: self.fingerprint,
       inviterAlias: self.alias,
-      role: HomeHubRole.viewer,
+      role: role,
+      expiresAt: role == HomeHubRole.guest ? DateTime.now().add(const Duration(hours: 24)) : null,
     );
     try {
       final result = await HomeHubClient(
