@@ -30,6 +30,12 @@ jobs:
         run: |
           rustfmt --edition 2021 --check packages/core/src/http/server/stream.rs
           rustfmt --edition 2021 --check packages/core/tests/stream_browse.rs
+          rustfmt --edition 2021 --check packages/core/src/http/server/home_hub.rs
+          rustfmt --edition 2021 --check packages/core/tests/home_hub.rs
+          rustfmt --edition 2021 --check packages/localsend_isolates/rust/src/api/server.rs
+
+      - name: Run Home Hub integration tests
+        run: cargo test --manifest-path packages/core/Cargo.toml --features http --test home_hub -- --nocapture
 
       - name: Run Stream & Browse integration tests
         run: cargo test --manifest-path packages/core/Cargo.toml --features http --test stream_browse -- --nocapture
@@ -39,6 +45,19 @@ jobs:
 
       - name: Check core HTTP build
         run: cargo check --manifest-path packages/core/Cargo.toml --features http
+
+      - name: Set up Flutter for Home Hub analysis
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: false
+
+      - name: Analyze Flutter Home Hub changes
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter analyze --no-fatal-infos
 
   build_android:
     name: Build Android APKs

@@ -3318,6 +3318,7 @@ dependencies = [
  "bytes",
  "flutter_rust_bridge",
  "localsend",
+ "serde_json",
  "tokio",
  "tokio-util",
  "tracing",

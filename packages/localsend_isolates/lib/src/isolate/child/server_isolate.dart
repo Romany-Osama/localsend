@@ -42,12 +42,23 @@ class HttpServerStartTask implements BaseHttpServerTask {
   /// application instance request this one to show itself. `null` disables it.
   final String? showToken;
 
+  /// Group IDs that the Rust Home Hub server may accept events for.
+  final List<String> homeHubGroupIds;
+
   HttpServerStartTask({
     required this.pin,
     required this.verifyChecksums,
     required this.web,
     required this.showToken,
+    required this.homeHubGroupIds,
   });
+}
+
+/// Replaces the Rust-side Home Hub group allow-list without restarting the server.
+class HttpServerSetHomeHubGroupIdsTask implements BaseHttpServerTask {
+  final List<String> groupIds;
+
+  HttpServerSetHomeHubGroupIdsTask({required this.groupIds});
 }
 
 /// Stops the HTTP server.
@@ -168,6 +179,22 @@ class HttpServerStreamSessionDecisionTask implements BaseHttpServerTask {
   final bool accept;
 
   HttpServerStreamSessionDecisionTask({required this.sessionId, required this.accept});
+}
+
+/// Answers a pending Home Hub invitation request.
+class HttpServerHomeHubInviteDecisionTask implements BaseHttpServerTask {
+  final String inviteId;
+  final bool accept;
+
+  HttpServerHomeHubInviteDecisionTask({required this.inviteId, required this.accept});
+}
+
+/// Answers a pending Home Hub transfer offer for this device only.
+class HttpServerHomeHubTransferOfferDecisionTask implements BaseHttpServerTask {
+  final String offerId;
+  final bool accept;
+
+  HttpServerHomeHubTransferOfferDecisionTask({required this.offerId, required this.accept});
 }
 
 /// Answers a pending Stream & Browse file request.
@@ -351,6 +378,70 @@ class HttpServerStreamPrepareSessionEvent extends HttpServerEvent {
     required this.ip,
     required this.sessionId,
     required this.userAgent,
+  });
+}
+
+/// A validated local Home Hub transfer offer that requires an explicit decision.
+class HttpServerHomeHubTransferOfferEvent extends HttpServerEvent {
+  final String ip;
+  final String offerId;
+  final String groupId;
+  final String senderDeviceId;
+  final String senderAlias;
+  final List<RsHomeHubTransferFile> files;
+
+  HttpServerHomeHubTransferOfferEvent({
+    required this.ip,
+    required this.offerId,
+    required this.groupId,
+    required this.senderDeviceId,
+    required this.senderAlias,
+    required this.files,
+  });
+}
+
+/// A validated local Home Hub chat message.
+class HttpServerHomeHubChatMessageEvent extends HttpServerEvent {
+  final String eventId;
+  final String groupId;
+  final String senderDeviceId;
+  final String senderAlias;
+  final String text;
+  final String createdAt;
+
+  HttpServerHomeHubChatMessageEvent({
+    required this.eventId,
+    required this.groupId,
+    required this.senderDeviceId,
+    required this.senderAlias,
+    required this.text,
+    required this.createdAt,
+  });
+}
+
+/// A remote device sent a validated Home Hub invitation.
+/// Must be answered with a [HttpServerHomeHubInviteDecisionTask].
+class HttpServerHomeHubInviteRequestEvent extends HttpServerEvent {
+  final String ip;
+  final String inviteId;
+  final String groupId;
+  final String groupName;
+  final String senderDeviceId;
+  final String senderAlias;
+  final String role;
+  final String createdAt;
+  final String? expiresAt;
+
+  HttpServerHomeHubInviteRequestEvent({
+    required this.ip,
+    required this.inviteId,
+    required this.groupId,
+    required this.groupName,
+    required this.senderDeviceId,
+    required this.senderAlias,
+    required this.role,
+    required this.createdAt,
+    required this.expiresAt,
   });
 }
 
@@ -605,6 +696,42 @@ Future<void> setupHttpServerIsolate(
                       purpose: purpose,
                     ),
                   );
+                case RsServerEvent_HomeHubInviteRequest(:final ip, :final inviteId, :final groupId, :final groupName, :final senderDeviceId, :final senderAlias, :final role, :final createdAt, :final expiresAt):
+                  emit(
+                    HttpServerHomeHubInviteRequestEvent(
+                      ip: ip,
+                      inviteId: inviteId,
+                      groupId: groupId,
+                      groupName: groupName,
+                      senderDeviceId: senderDeviceId,
+                      senderAlias: senderAlias,
+                      role: role,
+                      createdAt: createdAt,
+                      expiresAt: expiresAt,
+                    ),
+                  );
+                case RsServerEvent_HomeHubTransferOffer(:final ip, :final offerId, :final groupId, :final senderDeviceId, :final senderAlias, :final files):
+                  emit(
+                    HttpServerHomeHubTransferOfferEvent(
+                      ip: ip,
+                      offerId: offerId,
+                      groupId: groupId,
+                      senderDeviceId: senderDeviceId,
+                      senderAlias: senderAlias,
+                      files: files,
+                    ),
+                  );
+                case RsServerEvent_HomeHubChatMessage(:final eventId, :final groupId, :final senderDeviceId, :final senderAlias, :final text, :final createdAt):
+                  emit(
+                    HttpServerHomeHubChatMessageEvent(
+                      eventId: eventId,
+                      groupId: groupId,
+                      senderDeviceId: senderDeviceId,
+                      senderAlias: senderAlias,
+                      text: text,
+                      createdAt: createdAt,
+                    ),
+                  );
                 case RsServerEvent_Show(:final args):
                   emit(HttpServerShowEvent(args: args));
                 case RsServerEvent_ListenerFailed(:final error):
@@ -620,6 +747,9 @@ Future<void> setupHttpServerIsolate(
               ),
             );
           }
+          return;
+        case HttpServerSetHomeHubGroupIdsTask task:
+          await ref.read(httpServerProvider).setHomeHubGroupIds(task.groupIds);
           return;
         case HttpServerStopTask _:
           ref.read(_receiveSessionProvider).session = null;
@@ -683,6 +813,22 @@ Future<void> setupHttpServerIsolate(
               .read(httpServerProvider)
               .respondStreamFile(
                 requestId: decisionTask.requestId,
+                accept: decisionTask.accept,
+              );
+          return;
+        case HttpServerHomeHubInviteDecisionTask decisionTask:
+          await ref
+              .read(httpServerProvider)
+              .respondHomeHubInvite(
+                inviteId: decisionTask.inviteId,
+                accept: decisionTask.accept,
+              );
+          return;
+        case HttpServerHomeHubTransferOfferDecisionTask decisionTask:
+          await ref
+              .read(httpServerProvider)
+              .respondHomeHubTransferOffer(
+                offerId: decisionTask.offerId,
                 accept: decisionTask.accept,
               );
           return;

@@ -53,6 +53,32 @@ impl<'a> TargetUrl<'a> {
     }
 }
 
+/// Builds a v2 URL when the endpoint path is supplied dynamically.
+/// This is used only for local control-plane endpoints such as Home Hub.
+pub(super) fn dynamic_target_url(
+    version: ApiVersion,
+    protocol: &'static str,
+    host: String,
+    port: u16,
+    path: &str,
+) -> String {
+    format!(
+        "{}://{}:{}/api/localsend/{}{}",
+        protocol,
+        match scoped_host::encode(&host) {
+            Some(encoded) => Cow::Owned(encoded),
+            None if host.contains(':') => Cow::Owned(format!("[{}]", host)),
+            None => Cow::Borrowed(&host),
+        },
+        port,
+        match version {
+            ApiVersion::V2 => "v2",
+            ApiVersion::V3 => "v3",
+        },
+        path,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::{ApiVersion, TargetUrl};

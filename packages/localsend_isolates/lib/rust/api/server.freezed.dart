@@ -55,7 +55,7 @@ extension RsServerEventPatterns on RsServerEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsServerEvent_Register value)?  register,TResult Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult Function( RsServerEvent_FileUpload value)?  fileUpload,TResult Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult Function( RsServerEvent_Show value)?  show_,TResult Function( RsServerEvent_ListenerFailed value)?  listenerFailed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( RsServerEvent_Register value)?  register,TResult Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult Function( RsServerEvent_FileUpload value)?  fileUpload,TResult Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult Function( RsServerEvent_StreamPrepareSession value)?  streamPrepareSession,TResult Function( RsServerEvent_StreamFileRequest value)?  streamFileRequest,TResult Function( RsServerEvent_Show value)?  show_,TResult Function( RsServerEvent_HomeHubInviteRequest value)?  homeHubInviteRequest,TResult Function( RsServerEvent_HomeHubChatMessage value)?  homeHubChatMessage,TResult Function( RsServerEvent_ListenerFailed value)?  listenerFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
@@ -66,8 +66,12 @@ return sessionEnd(_that);case RsServerEvent_PrepareUploadAborted() when prepareU
 return prepareUploadAborted(_that);case RsServerEvent_CancelReceived() when cancelReceived != null:
 return cancelReceived(_that);case RsServerEvent_WebPrepareDownload() when webPrepareDownload != null:
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload() when webFileDownload != null:
-return webFileDownload(_that);case RsServerEvent_Show() when show_ != null:
-return show_(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
+return webFileDownload(_that);case RsServerEvent_StreamPrepareSession() when streamPrepareSession != null:
+return streamPrepareSession(_that);case RsServerEvent_StreamFileRequest() when streamFileRequest != null:
+return streamFileRequest(_that);case RsServerEvent_Show() when show_ != null:
+return show_(_that);case RsServerEvent_HomeHubInviteRequest() when homeHubInviteRequest != null:
+return homeHubInviteRequest(_that);case RsServerEvent_HomeHubChatMessage() when homeHubChatMessage != null:
+return homeHubChatMessage(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that);case _:
   return orElse();
 
@@ -86,7 +90,7 @@ return listenerFailed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsServerEvent_Register value)  register,required TResult Function( RsServerEvent_PrepareUpload value)  prepareUpload,required TResult Function( RsServerEvent_FileUpload value)  fileUpload,required TResult Function( RsServerEvent_SessionEnd value)  sessionEnd,required TResult Function( RsServerEvent_PrepareUploadAborted value)  prepareUploadAborted,required TResult Function( RsServerEvent_CancelReceived value)  cancelReceived,required TResult Function( RsServerEvent_WebPrepareDownload value)  webPrepareDownload,required TResult Function( RsServerEvent_WebFileDownload value)  webFileDownload,required TResult Function( RsServerEvent_Show value)  show_,required TResult Function( RsServerEvent_ListenerFailed value)  listenerFailed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( RsServerEvent_Register value)  register,required TResult Function( RsServerEvent_PrepareUpload value)  prepareUpload,required TResult Function( RsServerEvent_FileUpload value)  fileUpload,required TResult Function( RsServerEvent_SessionEnd value)  sessionEnd,required TResult Function( RsServerEvent_PrepareUploadAborted value)  prepareUploadAborted,required TResult Function( RsServerEvent_CancelReceived value)  cancelReceived,required TResult Function( RsServerEvent_WebPrepareDownload value)  webPrepareDownload,required TResult Function( RsServerEvent_WebFileDownload value)  webFileDownload,required TResult Function( RsServerEvent_StreamPrepareSession value)  streamPrepareSession,required TResult Function( RsServerEvent_StreamFileRequest value)  streamFileRequest,required TResult Function( RsServerEvent_Show value)  show_,required TResult Function( RsServerEvent_HomeHubInviteRequest value)  homeHubInviteRequest,required TResult Function( RsServerEvent_HomeHubChatMessage value)  homeHubChatMessage,required TResult Function( RsServerEvent_ListenerFailed value)  listenerFailed,}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register():
@@ -97,12 +101,15 @@ return sessionEnd(_that);case RsServerEvent_PrepareUploadAborted():
 return prepareUploadAborted(_that);case RsServerEvent_CancelReceived():
 return cancelReceived(_that);case RsServerEvent_WebPrepareDownload():
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload():
-return webFileDownload(_that);case RsServerEvent_Show():
-return show_(_that);case RsServerEvent_ListenerFailed():
-return listenerFailed(_that);default:
-throw StateError('Unhandled RsServerEvent variant');}
-	}
-	/// A variant of `map` that fallback to returning `null`.
+return webFileDownload(_that);case RsServerEvent_StreamPrepareSession():
+return streamPrepareSession(_that);case RsServerEvent_StreamFileRequest():
+return streamFileRequest(_that);case RsServerEvent_Show():
+return show_(_that);case RsServerEvent_HomeHubInviteRequest():
+return homeHubInviteRequest(_that);case RsServerEvent_HomeHubChatMessage():
+return homeHubChatMessage(_that);case RsServerEvent_ListenerFailed():
+return listenerFailed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
 ///
 /// It is equivalent to doing:
 /// ```dart
@@ -114,7 +121,7 @@ throw StateError('Unhandled RsServerEvent variant');}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsServerEvent_Register value)?  register,TResult? Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult? Function( RsServerEvent_FileUpload value)?  fileUpload,TResult? Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult? Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult? Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult? Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult? Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult? Function( RsServerEvent_Show value)?  show_,TResult? Function( RsServerEvent_ListenerFailed value)?  listenerFailed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( RsServerEvent_Register value)?  register,TResult? Function( RsServerEvent_PrepareUpload value)?  prepareUpload,TResult? Function( RsServerEvent_FileUpload value)?  fileUpload,TResult? Function( RsServerEvent_SessionEnd value)?  sessionEnd,TResult? Function( RsServerEvent_PrepareUploadAborted value)?  prepareUploadAborted,TResult? Function( RsServerEvent_CancelReceived value)?  cancelReceived,TResult? Function( RsServerEvent_WebPrepareDownload value)?  webPrepareDownload,TResult? Function( RsServerEvent_WebFileDownload value)?  webFileDownload,TResult? Function( RsServerEvent_StreamPrepareSession value)?  streamPrepareSession,TResult? Function( RsServerEvent_StreamFileRequest value)?  streamFileRequest,TResult? Function( RsServerEvent_Show value)?  show_,TResult? Function( RsServerEvent_HomeHubInviteRequest value)?  homeHubInviteRequest,TResult? Function( RsServerEvent_HomeHubChatMessage value)?  homeHubChatMessage,TResult? Function( RsServerEvent_ListenerFailed value)?  listenerFailed,}){
 final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
@@ -125,8 +132,12 @@ return sessionEnd(_that);case RsServerEvent_PrepareUploadAborted() when prepareU
 return prepareUploadAborted(_that);case RsServerEvent_CancelReceived() when cancelReceived != null:
 return cancelReceived(_that);case RsServerEvent_WebPrepareDownload() when webPrepareDownload != null:
 return webPrepareDownload(_that);case RsServerEvent_WebFileDownload() when webFileDownload != null:
-return webFileDownload(_that);case RsServerEvent_Show() when show_ != null:
-return show_(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
+return webFileDownload(_that);case RsServerEvent_StreamPrepareSession() when streamPrepareSession != null:
+return streamPrepareSession(_that);case RsServerEvent_StreamFileRequest() when streamFileRequest != null:
+return streamFileRequest(_that);case RsServerEvent_Show() when show_ != null:
+return show_(_that);case RsServerEvent_HomeHubInviteRequest() when homeHubInviteRequest != null:
+return homeHubInviteRequest(_that);case RsServerEvent_HomeHubChatMessage() when homeHubChatMessage != null:
+return homeHubChatMessage(_that);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that);case _:
   return null;
 
@@ -144,7 +155,7 @@ return listenerFailed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String ip,  RegisterDtoV2 info)?  register,TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult Function( String sessionId)?  prepareUploadAborted,TResult Function( String ip,  String sessionId)?  cancelReceived,TResult Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult Function( List<String> args)?  show_,TResult Function( String error)?  listenerFailed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String ip,  RegisterDtoV2 info)?  register,TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult Function( String sessionId)?  prepareUploadAborted,TResult Function( String ip,  String sessionId)?  cancelReceived,TResult Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult Function( String ip,  String sessionId,  String? userAgent)?  streamPrepareSession,TResult Function( String ip,  String sessionId,  String requestId,  RsStreamEntry entry,  String purpose)?  streamFileRequest,TResult Function( List<String> args)?  show_,TResult Function( String ip,  String inviteId,  String groupId,  String groupName,  String senderDeviceId,  String senderAlias,  String role,  String createdAt,  String? expiresAt)?  homeHubInviteRequest,TResult Function( String eventId,  String groupId,  String senderDeviceId,  String senderAlias,  String text,  String createdAt)?  homeHubChatMessage,TResult Function( String error)?  listenerFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload() when prepareUpload != null:
@@ -154,8 +165,12 @@ return sessionEnd(_that.sessionId,_that.reason);case RsServerEvent_PrepareUpload
 return prepareUploadAborted(_that.sessionId);case RsServerEvent_CancelReceived() when cancelReceived != null:
 return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDownload() when webPrepareDownload != null:
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload() when webFileDownload != null:
-return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show() when show_ != null:
-return show_(_that.args);case RsServerEvent_ListenerFailed() when listenerFailed != null:
+return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_StreamPrepareSession() when streamPrepareSession != null:
+return streamPrepareSession(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_StreamFileRequest() when streamFileRequest != null:
+return streamFileRequest(_that.ip,_that.sessionId,_that.requestId,_that.entry,_that.purpose);case RsServerEvent_Show() when show_ != null:
+return show_(_that.args);case RsServerEvent_HomeHubInviteRequest() when homeHubInviteRequest != null:
+return homeHubInviteRequest(_that.ip,_that.inviteId,_that.groupId,_that.groupName,_that.senderDeviceId,_that.senderAlias,_that.role,_that.createdAt,_that.expiresAt);case RsServerEvent_HomeHubChatMessage() when homeHubChatMessage != null:
+return homeHubChatMessage(_that.eventId,_that.groupId,_that.senderDeviceId,_that.senderAlias,_that.text,_that.createdAt);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that.error);case _:
   return orElse();
 
@@ -174,7 +189,7 @@ return listenerFailed(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String ip,  RegisterDtoV2 info)  register,required TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)  prepareUpload,required TResult Function( String sessionId,  String fileId,  FileDto file)  fileUpload,required TResult Function( String sessionId,  SessionEndReasonV2 reason)  sessionEnd,required TResult Function( String sessionId)  prepareUploadAborted,required TResult Function( String ip,  String sessionId)  cancelReceived,required TResult Function( String ip,  String sessionId,  String? userAgent)  webPrepareDownload,required TResult Function( String sessionId,  String fileId,  FileDto file)  webFileDownload,required TResult Function( List<String> args)  show_,required TResult Function( String error)  listenerFailed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String ip,  RegisterDtoV2 info)  register,required TResult Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)  prepareUpload,required TResult Function( String sessionId,  String fileId,  FileDto file)  fileUpload,required TResult Function( String sessionId,  SessionEndReasonV2 reason)  sessionEnd,required TResult Function( String sessionId)  prepareUploadAborted,required TResult Function( String ip,  String sessionId)  cancelReceived,required TResult Function( String ip,  String sessionId,  String? userAgent)  webPrepareDownload,required TResult Function( String sessionId,  String fileId,  FileDto file)  webFileDownload,required TResult Function( String ip,  String sessionId,  String? userAgent)  streamPrepareSession,required TResult Function( String ip,  String sessionId,  String requestId,  RsStreamEntry entry,  String purpose)  streamFileRequest,required TResult Function( List<String> args)  show_,required TResult Function( String ip,  String inviteId,  String groupId,  String groupName,  String senderDeviceId,  String senderAlias,  String role,  String createdAt,  String? expiresAt)  homeHubInviteRequest,required TResult Function( String eventId,  String groupId,  String senderDeviceId,  String senderAlias,  String text,  String createdAt)  homeHubChatMessage,required TResult Function( String error)  listenerFailed,}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register():
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload():
@@ -184,12 +199,15 @@ return sessionEnd(_that.sessionId,_that.reason);case RsServerEvent_PrepareUpload
 return prepareUploadAborted(_that.sessionId);case RsServerEvent_CancelReceived():
 return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDownload():
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload():
-return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show():
-return show_(_that.args);case RsServerEvent_ListenerFailed():
-return listenerFailed(_that.error);default:
-throw StateError('Unhandled RsServerEvent variant');}
-	}
-	/// A variant of `when` that fallback to returning `null`
+return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_StreamPrepareSession():
+return streamPrepareSession(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_StreamFileRequest():
+return streamFileRequest(_that.ip,_that.sessionId,_that.requestId,_that.entry,_that.purpose);case RsServerEvent_Show():
+return show_(_that.args);case RsServerEvent_HomeHubInviteRequest():
+return homeHubInviteRequest(_that.ip,_that.inviteId,_that.groupId,_that.groupName,_that.senderDeviceId,_that.senderAlias,_that.role,_that.createdAt,_that.expiresAt);case RsServerEvent_HomeHubChatMessage():
+return homeHubChatMessage(_that.eventId,_that.groupId,_that.senderDeviceId,_that.senderAlias,_that.text,_that.createdAt);case RsServerEvent_ListenerFailed():
+return listenerFailed(_that.error);}
+}
+/// A variant of `when` that fallback to returning `null`
 ///
 /// It is equivalent to doing:
 /// ```dart
@@ -201,7 +219,7 @@ throw StateError('Unhandled RsServerEvent variant');}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String ip,  RegisterDtoV2 info)?  register,TResult? Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult? Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult? Function( String sessionId)?  prepareUploadAborted,TResult? Function( String ip,  String sessionId)?  cancelReceived,TResult? Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult? Function( List<String> args)?  show_,TResult? Function( String error)?  listenerFailed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String ip,  RegisterDtoV2 info)?  register,TResult? Function( String sessionId,  String ip,  RegisterDtoV2 info,  String? certFingerprint,  Map<String, FileDto> files)?  prepareUpload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  fileUpload,TResult? Function( String sessionId,  SessionEndReasonV2 reason)?  sessionEnd,TResult? Function( String sessionId)?  prepareUploadAborted,TResult? Function( String ip,  String sessionId)?  cancelReceived,TResult? Function( String ip,  String sessionId,  String? userAgent)?  webPrepareDownload,TResult? Function( String sessionId,  String fileId,  FileDto file)?  webFileDownload,TResult? Function( String ip,  String sessionId,  String? userAgent)?  streamPrepareSession,TResult? Function( String ip,  String sessionId,  String requestId,  RsStreamEntry entry,  String purpose)?  streamFileRequest,TResult? Function( List<String> args)?  show_,TResult? Function( String ip,  String inviteId,  String groupId,  String groupName,  String senderDeviceId,  String senderAlias,  String role,  String createdAt,  String? expiresAt)?  homeHubInviteRequest,TResult? Function( String eventId,  String groupId,  String senderDeviceId,  String senderAlias,  String text,  String createdAt)?  homeHubChatMessage,TResult? Function( String error)?  listenerFailed,}) {final _that = this;
 switch (_that) {
 case RsServerEvent_Register() when register != null:
 return register(_that.ip,_that.info);case RsServerEvent_PrepareUpload() when prepareUpload != null:
@@ -211,8 +229,12 @@ return sessionEnd(_that.sessionId,_that.reason);case RsServerEvent_PrepareUpload
 return prepareUploadAborted(_that.sessionId);case RsServerEvent_CancelReceived() when cancelReceived != null:
 return cancelReceived(_that.ip,_that.sessionId);case RsServerEvent_WebPrepareDownload() when webPrepareDownload != null:
 return webPrepareDownload(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_WebFileDownload() when webFileDownload != null:
-return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_Show() when show_ != null:
-return show_(_that.args);case RsServerEvent_ListenerFailed() when listenerFailed != null:
+return webFileDownload(_that.sessionId,_that.fileId,_that.file);case RsServerEvent_StreamPrepareSession() when streamPrepareSession != null:
+return streamPrepareSession(_that.ip,_that.sessionId,_that.userAgent);case RsServerEvent_StreamFileRequest() when streamFileRequest != null:
+return streamFileRequest(_that.ip,_that.sessionId,_that.requestId,_that.entry,_that.purpose);case RsServerEvent_Show() when show_ != null:
+return show_(_that.args);case RsServerEvent_HomeHubInviteRequest() when homeHubInviteRequest != null:
+return homeHubInviteRequest(_that.ip,_that.inviteId,_that.groupId,_that.groupName,_that.senderDeviceId,_that.senderAlias,_that.role,_that.createdAt,_that.expiresAt);case RsServerEvent_HomeHubChatMessage() when homeHubChatMessage != null:
+return homeHubChatMessage(_that.eventId,_that.groupId,_that.senderDeviceId,_that.senderAlias,_that.text,_that.createdAt);case RsServerEvent_ListenerFailed() when listenerFailed != null:
 return listenerFailed(_that.error);case _:
   return null;
 
@@ -226,7 +248,7 @@ return listenerFailed(_that.error);case _:
 
 class RsServerEvent_Register extends RsServerEvent {
   const RsServerEvent_Register({required this.ip, required this.info}): super._();
-  
+
 
  final  String ip;
  final  RegisterDtoV2 info;
@@ -294,7 +316,7 @@ as RegisterDtoV2,
 
 class RsServerEvent_PrepareUpload extends RsServerEvent {
   const RsServerEvent_PrepareUpload({required this.sessionId, required this.ip, required this.info, this.certFingerprint, required final  Map<String, FileDto> files}): _files = files,super._();
-  
+
 
 /// The session ID the upload session will have when the request is accepted.
  final  String sessionId;
@@ -379,7 +401,7 @@ as Map<String, FileDto>,
 
 class RsServerEvent_FileUpload extends RsServerEvent {
   const RsServerEvent_FileUpload({required this.sessionId, required this.fileId, required this.file}): super._();
-  
+
 
  final  String sessionId;
  final  String fileId;
@@ -449,7 +471,7 @@ as FileDto,
 
 class RsServerEvent_SessionEnd extends RsServerEvent {
   const RsServerEvent_SessionEnd({required this.sessionId, required this.reason}): super._();
-  
+
 
  final  String sessionId;
  final  SessionEndReasonV2 reason;
@@ -517,7 +539,7 @@ as SessionEndReasonV2,
 
 class RsServerEvent_PrepareUploadAborted extends RsServerEvent {
   const RsServerEvent_PrepareUploadAborted({required this.sessionId}): super._();
-  
+
 
  final  String sessionId;
 
@@ -583,7 +605,7 @@ as String,
 
 class RsServerEvent_CancelReceived extends RsServerEvent {
   const RsServerEvent_CancelReceived({required this.ip, required this.sessionId}): super._();
-  
+
 
  final  String ip;
  final  String sessionId;
@@ -651,7 +673,7 @@ as String,
 
 class RsServerEvent_WebPrepareDownload extends RsServerEvent {
   const RsServerEvent_WebPrepareDownload({required this.ip, required this.sessionId, this.userAgent}): super._();
-  
+
 
  final  String ip;
  final  String sessionId;
@@ -721,7 +743,7 @@ as String?,
 
 class RsServerEvent_WebFileDownload extends RsServerEvent {
   const RsServerEvent_WebFileDownload({required this.sessionId, required this.fileId, required this.file}): super._();
-  
+
 
  final  String sessionId;
  final  String fileId;
@@ -789,9 +811,153 @@ as FileDto,
 /// @nodoc
 
 
+class RsServerEvent_StreamPrepareSession extends RsServerEvent {
+  const RsServerEvent_StreamPrepareSession({required this.ip, required this.sessionId, this.userAgent}): super._();
+
+
+ final  String ip;
+ final  String sessionId;
+ final  String? userAgent;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_StreamPrepareSessionCopyWith<RsServerEvent_StreamPrepareSession> get copyWith => _$RsServerEvent_StreamPrepareSessionCopyWithImpl<RsServerEvent_StreamPrepareSession>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_StreamPrepareSession&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.userAgent, userAgent) || other.userAgent == userAgent));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ip,sessionId,userAgent);
+
+@override
+String toString() {
+  return 'RsServerEvent.streamPrepareSession(ip: $ip, sessionId: $sessionId, userAgent: $userAgent)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_StreamPrepareSessionCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_StreamPrepareSessionCopyWith(RsServerEvent_StreamPrepareSession value, $Res Function(RsServerEvent_StreamPrepareSession) _then) = _$RsServerEvent_StreamPrepareSessionCopyWithImpl;
+@useResult
+$Res call({
+ String ip, String sessionId, String? userAgent
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_StreamPrepareSessionCopyWithImpl<$Res>
+    implements $RsServerEvent_StreamPrepareSessionCopyWith<$Res> {
+  _$RsServerEvent_StreamPrepareSessionCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_StreamPrepareSession _self;
+  final $Res Function(RsServerEvent_StreamPrepareSession) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ip = null,Object? sessionId = null,Object? userAgent = freezed,}) {
+  return _then(RsServerEvent_StreamPrepareSession(
+ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,userAgent: freezed == userAgent ? _self.userAgent : userAgent // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class RsServerEvent_StreamFileRequest extends RsServerEvent {
+  const RsServerEvent_StreamFileRequest({required this.ip, required this.sessionId, required this.requestId, required this.entry, required this.purpose}): super._();
+
+
+ final  String ip;
+ final  String sessionId;
+ final  String requestId;
+ final  RsStreamEntry entry;
+ final  String purpose;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_StreamFileRequestCopyWith<RsServerEvent_StreamFileRequest> get copyWith => _$RsServerEvent_StreamFileRequestCopyWithImpl<RsServerEvent_StreamFileRequest>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_StreamFileRequest&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.requestId, requestId) || other.requestId == requestId)&&(identical(other.entry, entry) || other.entry == entry)&&(identical(other.purpose, purpose) || other.purpose == purpose));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ip,sessionId,requestId,entry,purpose);
+
+@override
+String toString() {
+  return 'RsServerEvent.streamFileRequest(ip: $ip, sessionId: $sessionId, requestId: $requestId, entry: $entry, purpose: $purpose)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_StreamFileRequestCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_StreamFileRequestCopyWith(RsServerEvent_StreamFileRequest value, $Res Function(RsServerEvent_StreamFileRequest) _then) = _$RsServerEvent_StreamFileRequestCopyWithImpl;
+@useResult
+$Res call({
+ String ip, String sessionId, String requestId, RsStreamEntry entry, String purpose
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_StreamFileRequestCopyWithImpl<$Res>
+    implements $RsServerEvent_StreamFileRequestCopyWith<$Res> {
+  _$RsServerEvent_StreamFileRequestCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_StreamFileRequest _self;
+  final $Res Function(RsServerEvent_StreamFileRequest) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ip = null,Object? sessionId = null,Object? requestId = null,Object? entry = null,Object? purpose = null,}) {
+  return _then(RsServerEvent_StreamFileRequest(
+ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,requestId: null == requestId ? _self.requestId : requestId // ignore: cast_nullable_to_non_nullable
+as String,entry: null == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
+as RsStreamEntry,purpose: null == purpose ? _self.purpose : purpose // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
 class RsServerEvent_Show extends RsServerEvent {
   const RsServerEvent_Show({required final  List<String> args}): _args = args,super._();
-  
+
 
 /// Command-line arguments forwarded by the other application instance.
  final  List<String> _args;
@@ -863,9 +1029,167 @@ as List<String>,
 /// @nodoc
 
 
+class RsServerEvent_HomeHubInviteRequest extends RsServerEvent {
+  const RsServerEvent_HomeHubInviteRequest({required this.ip, required this.inviteId, required this.groupId, required this.groupName, required this.senderDeviceId, required this.senderAlias, required this.role, required this.createdAt, this.expiresAt}): super._();
+
+
+ final  String ip;
+ final  String inviteId;
+ final  String groupId;
+ final  String groupName;
+ final  String senderDeviceId;
+ final  String senderAlias;
+ final  String role;
+ final  String createdAt;
+ final  String? expiresAt;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_HomeHubInviteRequestCopyWith<RsServerEvent_HomeHubInviteRequest> get copyWith => _$RsServerEvent_HomeHubInviteRequestCopyWithImpl<RsServerEvent_HomeHubInviteRequest>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_HomeHubInviteRequest&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.inviteId, inviteId) || other.inviteId == inviteId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.senderDeviceId, senderDeviceId) || other.senderDeviceId == senderDeviceId)&&(identical(other.senderAlias, senderAlias) || other.senderAlias == senderAlias)&&(identical(other.role, role) || other.role == role)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ip,inviteId,groupId,groupName,senderDeviceId,senderAlias,role,createdAt,expiresAt);
+
+@override
+String toString() {
+  return 'RsServerEvent.homeHubInviteRequest(ip: $ip, inviteId: $inviteId, groupId: $groupId, groupName: $groupName, senderDeviceId: $senderDeviceId, senderAlias: $senderAlias, role: $role, createdAt: $createdAt, expiresAt: $expiresAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_HomeHubInviteRequestCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_HomeHubInviteRequestCopyWith(RsServerEvent_HomeHubInviteRequest value, $Res Function(RsServerEvent_HomeHubInviteRequest) _then) = _$RsServerEvent_HomeHubInviteRequestCopyWithImpl;
+@useResult
+$Res call({
+ String ip, String inviteId, String groupId, String groupName, String senderDeviceId, String senderAlias, String role, String createdAt, String? expiresAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_HomeHubInviteRequestCopyWithImpl<$Res>
+    implements $RsServerEvent_HomeHubInviteRequestCopyWith<$Res> {
+  _$RsServerEvent_HomeHubInviteRequestCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_HomeHubInviteRequest _self;
+  final $Res Function(RsServerEvent_HomeHubInviteRequest) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ip = null,Object? inviteId = null,Object? groupId = null,Object? groupName = null,Object? senderDeviceId = null,Object? senderAlias = null,Object? role = null,Object? createdAt = null,Object? expiresAt = freezed,}) {
+  return _then(RsServerEvent_HomeHubInviteRequest(
+ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
+as String,inviteId: null == inviteId ? _self.inviteId : inviteId // ignore: cast_nullable_to_non_nullable
+as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
+as String,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
+as String,senderDeviceId: null == senderDeviceId ? _self.senderDeviceId : senderDeviceId // ignore: cast_nullable_to_non_nullable
+as String,senderAlias: null == senderAlias ? _self.senderAlias : senderAlias // ignore: cast_nullable_to_non_nullable
+as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
+as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class RsServerEvent_HomeHubChatMessage extends RsServerEvent {
+  const RsServerEvent_HomeHubChatMessage({required this.eventId, required this.groupId, required this.senderDeviceId, required this.senderAlias, required this.text, required this.createdAt}): super._();
+
+
+ final  String eventId;
+ final  String groupId;
+ final  String senderDeviceId;
+ final  String senderAlias;
+ final  String text;
+ final  String createdAt;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RsServerEvent_HomeHubChatMessageCopyWith<RsServerEvent_HomeHubChatMessage> get copyWith => _$RsServerEvent_HomeHubChatMessageCopyWithImpl<RsServerEvent_HomeHubChatMessage>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RsServerEvent_HomeHubChatMessage&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.senderDeviceId, senderDeviceId) || other.senderDeviceId == senderDeviceId)&&(identical(other.senderAlias, senderAlias) || other.senderAlias == senderAlias)&&(identical(other.text, text) || other.text == text)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,eventId,groupId,senderDeviceId,senderAlias,text,createdAt);
+
+@override
+String toString() {
+  return 'RsServerEvent.homeHubChatMessage(eventId: $eventId, groupId: $groupId, senderDeviceId: $senderDeviceId, senderAlias: $senderAlias, text: $text, createdAt: $createdAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RsServerEvent_HomeHubChatMessageCopyWith<$Res> implements $RsServerEventCopyWith<$Res> {
+  factory $RsServerEvent_HomeHubChatMessageCopyWith(RsServerEvent_HomeHubChatMessage value, $Res Function(RsServerEvent_HomeHubChatMessage) _then) = _$RsServerEvent_HomeHubChatMessageCopyWithImpl;
+@useResult
+$Res call({
+ String eventId, String groupId, String senderDeviceId, String senderAlias, String text, String createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$RsServerEvent_HomeHubChatMessageCopyWithImpl<$Res>
+    implements $RsServerEvent_HomeHubChatMessageCopyWith<$Res> {
+  _$RsServerEvent_HomeHubChatMessageCopyWithImpl(this._self, this._then);
+
+  final RsServerEvent_HomeHubChatMessage _self;
+  final $Res Function(RsServerEvent_HomeHubChatMessage) _then;
+
+/// Create a copy of RsServerEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? eventId = null,Object? groupId = null,Object? senderDeviceId = null,Object? senderAlias = null,Object? text = null,Object? createdAt = null,}) {
+  return _then(RsServerEvent_HomeHubChatMessage(
+eventId: null == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
+as String,senderDeviceId: null == senderDeviceId ? _self.senderDeviceId : senderDeviceId // ignore: cast_nullable_to_non_nullable
+as String,senderAlias: null == senderAlias ? _self.senderAlias : senderAlias // ignore: cast_nullable_to_non_nullable
+as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
 class RsServerEvent_ListenerFailed extends RsServerEvent {
   const RsServerEvent_ListenerFailed({required this.error}): super._();
-  
+
 
 /// Description of the failure.
  final  String error;

@@ -1,17 +1,19 @@
 pub mod common;
+pub mod home_hub;
 pub mod internal;
 mod peer_ip;
+pub mod stream;
 pub mod v2;
 pub mod v3;
-pub mod stream;
 pub mod web;
 
 pub use peer_ip::PeerIp;
 
 use crate::crypto::cert::{fingerprint_from_cert_der, public_key_from_cert_der};
+use crate::http::server::home_hub::{HomeHubConfig, HomeHubState};
 use crate::http::server::internal::{InternalConfig, InternalState};
-use crate::http::server::v2::ServerEventV2;
 use crate::http::server::stream::StreamState;
+use crate::http::server::v2::ServerEventV2;
 use crate::http::server::web::{WebConfig, WebI18n, WebPages};
 use crate::http::state::ClientInfo;
 use common::client_cert_verifier::CustomClientCertVerifier;
@@ -99,6 +101,9 @@ pub struct AppState {
 
     /// State of the v2 protocol endpoints. `None` disables the v2 routes.
     v2: Option<Arc<V2State>>,
+
+    /// State of the optional local Home Hub endpoints.
+    pub(crate) home_hub: Option<Arc<HomeHubState>>,
 }
 
 impl AppState {
@@ -107,6 +112,7 @@ impl AppState {
         internal_config: Option<InternalConfig>,
         v2_config: Option<ServerConfigV2>,
         web_config: Option<WebConfig>,
+        home_hub_config: Option<HomeHubConfig>,
     ) -> Self {
         let v2 = v2_config.map(|config| {
             Arc::new(V2State {
@@ -121,7 +127,9 @@ impl AppState {
         let (web, stream, web_upload, web_i18n, web_pages) = match web_config {
             Some(config) => (
                 config.send.map(|send| Arc::new(WebPageState::new(send))),
-                config.stream.map(|stream| Arc::new(StreamState::new(stream))),
+                config
+                    .stream
+                    .map(|stream| Arc::new(StreamState::new(stream))),
                 config.upload,
                 Some(Arc::new(config.i18n)),
                 Arc::new(config.pages),
@@ -145,6 +153,7 @@ impl AppState {
                 NonZeroUsize::new(200).unwrap(),
             ))),
             v2,
+            home_hub: home_hub_config.map(|config| Arc::new(HomeHubState::new(config))),
         }
     }
 }
@@ -153,6 +162,7 @@ impl AppState {
 /// (as opposed to the event channels which are driven by incoming requests).
 pub struct ServerHandle {
     v2: Option<Arc<V2State>>,
+    home_hub: Option<Arc<HomeHubState>>,
 
     /// The port the listeners are bound to.
     port: u16,
@@ -167,6 +177,15 @@ pub struct ServerHandle {
 }
 
 impl ServerHandle {
+    /// Replaces the server-side allow-list used by Home Hub group events.
+    pub async fn set_home_hub_group_ids(&self, group_ids: Vec<String>) -> anyhow::Result<()> {
+        let Some(home_hub) = &self.home_hub else {
+            return Err(anyhow::anyhow!("Home Hub is not enabled"));
+        };
+        home_hub.set_allowed_group_ids(group_ids).await;
+        Ok(())
+    }
+
     /// The port the listeners are bound to. Relevant when the server was
     /// started with port 0, where the OS picks the port.
     pub fn port(&self) -> u16 {
@@ -236,6 +255,8 @@ impl ServerHandle {
 }
 
 /// Binds the server to the specified port on both IPv4 and IPv6 addresses.
+/// This compatibility wrapper keeps the original LocalSend server API with
+/// Home Hub disabled.
 pub async fn start_with_port(
     port: u16,
     tls_config: Option<TlsConfig>,
@@ -245,13 +266,43 @@ pub async fn start_with_port(
     web_config: Option<WebConfig>,
     stop_rx: oneshot::Receiver<()>,
 ) -> anyhow::Result<ServerHandle> {
+    start_with_port_and_home_hub(
+        port,
+        tls_config,
+        info,
+        internal_config,
+        v2_config,
+        web_config,
+        None,
+        stop_rx,
+    )
+    .await
+}
+
+/// Binds the server and optionally enables the local Home Hub API.
+pub async fn start_with_port_and_home_hub(
+    port: u16,
+    tls_config: Option<TlsConfig>,
+    info: ClientInfo,
+    internal_config: Option<InternalConfig>,
+    v2_config: Option<ServerConfigV2>,
+    web_config: Option<WebConfig>,
+    home_hub_config: Option<HomeHubConfig>,
+    stop_rx: oneshot::Receiver<()>,
+) -> anyhow::Result<ServerHandle> {
     // Installed before returning, so that a client built right after (which
     // skips the install when a provider exists) does not race the accept task.
     let _ = rustls::crypto::ring::default_provider().install_default();
 
     let ipv4_socket_addr = SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), port);
     let info = Arc::new(Mutex::new(info));
-    let state = AppState::new(info.clone(), internal_config, v2_config, web_config);
+    let state = AppState::new(
+        info.clone(),
+        internal_config,
+        v2_config,
+        web_config,
+        home_hub_config,
+    );
 
     let ipv4_listener = tokio::net::TcpListener::bind(ipv4_socket_addr).await?;
     // With port 0, the IPv6 listener must reuse the port the IPv4 listener got.
@@ -314,6 +365,7 @@ pub async fn start_with_port(
 
     Ok(ServerHandle {
         v2: state.v2.clone(),
+        home_hub: state.home_hub.clone(),
         port: bound_port,
         ipv6_bound,
         task: Mutex::new(Some(task)),
@@ -618,6 +670,15 @@ async fn handle_request_inner(mut req: Request<Incoming>) -> Result<Response<Box
         }
         (&Method::POST, "/api/localsend/stream/v1/session") => {
             stream::prepare_session(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/v2/home-hub/v1/invite") => {
+            home_hub::invite(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/v2/home-hub/v1/events") => {
+            home_hub::chat_event(req, state, client_info).await
+        }
+        (&Method::POST, "/api/localsend/v2/home-hub/v1/transfers/offer") => {
+            home_hub::transfer_offer(req, state, client_info).await
         }
         (&Method::GET, "/api/localsend/stream/v1/roots") => {
             stream::roots(req, state, client_info).await

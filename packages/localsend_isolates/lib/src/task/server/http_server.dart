@@ -25,6 +25,7 @@ class HttpServerService {
     required bool verifyChecksums,
     required WebParams? web,
     required String? showToken,
+    required List<String> homeHubGroupIds,
   }) async {
     if (_server != null) {
       throw StateError('Server already running');
@@ -42,9 +43,15 @@ class HttpServerService {
       verifyChecksums: verifyChecksums,
       web: web,
       showToken: showToken,
+      homeHubGroupIds: homeHubGroupIds,
     );
     _server = server;
     return server.listen();
+  }
+
+  /// Updates the Rust-side Home Hub group allow-list without restarting the server.
+  Future<void> setHomeHubGroupIds(List<String> groupIds) async {
+    await _requireServer().setHomeHubGroupIds(groupIds: groupIds);
   }
 
   /// Answers a pending prepare-upload request.

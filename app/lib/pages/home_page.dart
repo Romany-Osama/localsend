@@ -6,6 +6,7 @@ import 'package:localsend_app/config/init.dart';
 import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/home_page_controller.dart';
+import 'package:localsend_app/pages/tabs/home_hub_tab.dart';
 import 'package:localsend_app/pages/tabs/receive_tab.dart';
 import 'package:localsend_app/pages/tabs/send_tab.dart';
 import 'package:localsend_app/pages/tabs/settings_tab.dart';
@@ -19,6 +20,7 @@ enum HomeTab {
   receive(Icons.wifi),
   send(Icons.send),
   stream(Icons.play_circle_outline),
+  homeHub(Icons.groups_2),
   settings(Icons.settings)
   ;
 
@@ -34,6 +36,8 @@ enum HomeTab {
         return t.sendTab.title;
       case HomeTab.stream:
         return 'Stream';
+      case HomeTab.homeHub:
+        return 'Home Hub';
       case HomeTab.settings:
         return t.settingsTab.title;
     }
@@ -150,6 +154,7 @@ class _HomePageState extends State<HomePage> with Refena {
                             ReceiveTab(),
                             SendTab(),
                             StreamTab(),
+                            HomeHubTab(),
                             SettingsTab(),
                           ],
                         ),

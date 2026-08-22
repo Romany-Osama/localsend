@@ -171,6 +171,24 @@ impl LsHttpClient {
             LsHttpClient::V3(client) => client.cancel(protocol, ip, port, session_id).await,
         }
     }
+
+    /// Sends a small authenticated JSON command to the v2 server namespace.
+    /// Home Hub uses this for local control-plane messages, never for file data.
+    pub async fn post_json(
+        &self,
+        protocol: model::discovery::ProtocolType,
+        ip: &str,
+        port: u16,
+        path: &str,
+        body: serde_json::Value,
+    ) -> Result<serde_json::Value, ClientError> {
+        match self {
+            LsHttpClient::V2(client) => client.post_json(protocol, ip, port, path, body).await,
+            LsHttpClient::V3(_) => Err(ClientError::Other(anyhow::anyhow!(
+                "Home Hub commands require the v2 HTTP client"
+            ))),
+        }
+    }
 }
 
 /// Builds a streaming request body from the file content, invoking `progress`

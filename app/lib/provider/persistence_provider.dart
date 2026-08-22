@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
+import 'package:localsend_app/model/home_hub.dart';
 import 'package:localsend_app/model/persistence/color_mode.dart';
 import 'package:localsend_app/model/persistence/favorite_device.dart';
 import 'package:localsend_app/model/persistence/quick_save_mode.dart';
@@ -95,6 +96,12 @@ const _createChecksums = 'ls_create_checksums';
 const _verifyChecksums = 'ls_verify_checksums';
 const _advancedSettingsKey = 'ls_advanced_settings';
 const _whatsNewKey = 'ls_whats_new';
+
+// Home Hub
+const _homeHubGroups = 'ls_home_hub_groups';
+const _homeHubInvites = 'ls_home_hub_invites';
+const _homeHubMessages = 'ls_home_hub_messages';
+const _homeHubOutbox = 'ls_home_hub_outbox';
 
 final persistenceProvider = Provider<PersistenceService>((ref) {
   throw Exception('persistenceProvider not initialized');
@@ -270,6 +277,78 @@ class PersistenceService {
   Future<void> setFavorites(List<FavoriteDevice> entries) async {
     final favoritesRaw = entries.map((entry) => jsonEncode(entry.toJson())).toList();
     await _prefs.setStringList(_favorites, favoritesRaw);
+  }
+
+  List<HomeHubGroup> getHomeHubGroups() {
+    final raw = _prefs.getStringList(_homeHubGroups) ?? [];
+    final groups = <HomeHubGroup>[];
+    for (final entry in raw) {
+      try {
+        groups.add(HomeHubGroup.fromJson(jsonDecode(entry) as Map<String, dynamic>));
+      } on Object {
+        // Ignore malformed data from an interrupted migration or old build.
+      }
+    }
+    return groups;
+  }
+
+  Future<void> setHomeHubGroups(List<HomeHubGroup> groups) async {
+    final raw = groups.map((group) => jsonEncode(group.toJson())).toList();
+    await _prefs.setStringList(_homeHubGroups, raw);
+  }
+
+  List<HomeHubInvite> getHomeHubInvites() {
+    final raw = _prefs.getStringList(_homeHubInvites) ?? [];
+    final invites = <HomeHubInvite>[];
+    for (final entry in raw) {
+      try {
+        invites.add(HomeHubInvite.fromJson(jsonDecode(entry) as Map<String, dynamic>));
+      } on Object {
+        // Ignore malformed data from an interrupted migration or old build.
+      }
+    }
+    return invites;
+  }
+
+  Future<void> setHomeHubInvites(List<HomeHubInvite> invites) async {
+    final raw = invites.map((invite) => jsonEncode(invite.toJson())).toList();
+    await _prefs.setStringList(_homeHubInvites, raw);
+  }
+
+  List<HomeHubChatMessage> getHomeHubMessages() {
+    final raw = _prefs.getStringList(_homeHubMessages) ?? [];
+    final messages = <HomeHubChatMessage>[];
+    for (final entry in raw) {
+      try {
+        messages.add(HomeHubChatMessage.fromJson(jsonDecode(entry) as Map<String, dynamic>));
+      } on Object {
+        // Ignore malformed data from an interrupted write.
+      }
+    }
+    return messages;
+  }
+
+  Future<void> setHomeHubMessages(List<HomeHubChatMessage> messages) async {
+    final raw = messages.map((message) => jsonEncode(message.toJson())).toList();
+    await _prefs.setStringList(_homeHubMessages, raw);
+  }
+
+  List<HomeHubOutboxItem> getHomeHubOutbox() {
+    final raw = _prefs.getStringList(_homeHubOutbox) ?? [];
+    final items = <HomeHubOutboxItem>[];
+    for (final entry in raw) {
+      try {
+        items.add(HomeHubOutboxItem.fromJson(jsonDecode(entry) as Map<String, dynamic>));
+      } on Object {
+        // Ignore malformed data from an interrupted write.
+      }
+    }
+    return items;
+  }
+
+  Future<void> setHomeHubOutbox(List<HomeHubOutboxItem> items) async {
+    final raw = items.map((item) => jsonEncode(item.toJson())).toList();
+    await _prefs.setStringList(_homeHubOutbox, raw);
   }
 
   String getShowToken() {

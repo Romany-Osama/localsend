@@ -253,6 +253,8 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr =>
 
 @protected List<RsDeviceLog> dco_decode_list_rs_device_log(dynamic raw);
 
+@protected List<RsHomeHubTransferFile> dco_decode_list_rs_home_hub_transfer_file(dynamic raw);
+
 @protected List<StreamRootParams> dco_decode_list_stream_root_params(dynamic raw);
 
 @protected LsHttpClientVersion dco_decode_ls_http_client_version(dynamic raw);
@@ -322,6 +324,8 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr =>
 @protected RsDiscoveredDevice dco_decode_rs_discovered_device(dynamic raw);
 
 @protected RsHashFileEvent dco_decode_rs_hash_file_event(dynamic raw);
+
+@protected RsHomeHubTransferFile dco_decode_rs_home_hub_transfer_file(dynamic raw);
 
 @protected RsHttpClientError dco_decode_rs_http_client_error(dynamic raw);
 
@@ -565,6 +569,8 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr =>
 
 @protected List<RsDeviceLog> sse_decode_list_rs_device_log(SseDeserializer deserializer);
 
+@protected List<RsHomeHubTransferFile> sse_decode_list_rs_home_hub_transfer_file(SseDeserializer deserializer);
+
 @protected List<StreamRootParams> sse_decode_list_stream_root_params(SseDeserializer deserializer);
 
 @protected LsHttpClientVersion sse_decode_ls_http_client_version(SseDeserializer deserializer);
@@ -634,6 +640,8 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr =>
 @protected RsDiscoveredDevice sse_decode_rs_discovered_device(SseDeserializer deserializer);
 
 @protected RsHashFileEvent sse_decode_rs_hash_file_event(SseDeserializer deserializer);
+
+@protected RsHomeHubTransferFile sse_decode_rs_home_hub_transfer_file(SseDeserializer deserializer);
 
 @protected RsHttpClientError sse_decode_rs_http_client_error(SseDeserializer deserializer);
 
@@ -879,6 +887,8 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr =>
 
 @protected void sse_encode_list_rs_device_log(List<RsDeviceLog> self, SseSerializer serializer);
 
+@protected void sse_encode_list_rs_home_hub_transfer_file(List<RsHomeHubTransferFile> self, SseSerializer serializer);
+
 @protected void sse_encode_list_stream_root_params(List<StreamRootParams> self, SseSerializer serializer);
 
 @protected void sse_encode_ls_http_client_version(LsHttpClientVersion self, SseSerializer serializer);
@@ -948,6 +958,8 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr =>
 @protected void sse_encode_rs_discovered_device(RsDiscoveredDevice self, SseSerializer serializer);
 
 @protected void sse_encode_rs_hash_file_event(RsHashFileEvent self, SseSerializer serializer);
+
+@protected void sse_encode_rs_home_hub_transfer_file(RsHomeHubTransferFile self, SseSerializer serializer);
 
 @protected void sse_encode_rs_http_client_error(RsHttpClientError self, SseSerializer serializer);
 

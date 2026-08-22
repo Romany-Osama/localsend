@@ -4,8 +4,8 @@ use crate::frb_generated::StreamSink;
 use flutter_rust_bridge::frb;
 pub use localsend::http::client::{ClientError, LsHttpClientVersion};
 pub use localsend::http::dto::{
-    PrepareUploadRequestDto, PrepareUploadResponseDto, PrepareUploadResult,
-    RegisterDto, RegisterResponseDto,
+    PrepareUploadRequestDto, PrepareUploadResponseDto, PrepareUploadResult, RegisterDto,
+    RegisterResponseDto,
 };
 use localsend::model::discovery::ProtocolType;
 use localsend::reqwest;
@@ -171,6 +171,25 @@ impl RsHttpClient {
             .map_err(RsHttpClientError::from)?;
 
         Ok(())
+    }
+
+    /// Sends a small authenticated JSON command to the local Home Hub API.
+    pub async fn post_json(
+        &self,
+        protocol: ProtocolType,
+        ip: &str,
+        port: u16,
+        path: String,
+        body: String,
+    ) -> Result<String, RsHttpClientError> {
+        let body = serde_json::from_str(&body)
+            .map_err(|error| RsHttpClientError::Json(error.to_string()))?;
+        let response = self
+            .inner
+            .post_json(protocol, ip, port, &path, body)
+            .await
+            .map_err(RsHttpClientError::from)?;
+        serde_json::to_string(&response).map_err(|error| RsHttpClientError::Json(error.to_string()))
     }
 }
 

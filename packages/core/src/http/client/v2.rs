@@ -1,5 +1,5 @@
 use super::{ClientError, ResponseExt, ResultWithPublicKey};
-use crate::http::client::url::{ApiVersion, TargetUrl};
+use crate::http::client::url::{dynamic_target_url, ApiVersion, TargetUrl};
 use crate::http::dto_v2::{
     InfoResponseDtoV2, PrepareDownloadResponseDtoV2, PrepareUploadRequestDtoV2,
     PrepareUploadResponseDtoV2, PrepareUploadResultV2, RegisterDtoV2, RegisterResponseDtoV2,
@@ -57,6 +57,35 @@ impl LsHttpClientV2 {
             .build()?;
 
         Ok(Self { client })
+    }
+
+    /// Sends a small authenticated JSON command to the v2 API namespace.
+    pub async fn post_json(
+        &self,
+        protocol: ProtocolType,
+        ip: &str,
+        port: u16,
+        path: &str,
+        body: serde_json::Value,
+    ) -> Result<serde_json::Value, ClientError> {
+        let url = dynamic_target_url(
+            ApiVersion::V2,
+            protocol.as_str(),
+            ip.to_string(),
+            port,
+            path,
+        );
+        let response = self
+            .client
+            .post(&url)
+            .header("Content-Type", "application/json")
+            .body(serde_json::to_string(&body)?)
+            .send()
+            .await?;
+        if response.status() != StatusCode::OK {
+            return response.into_error().await;
+        }
+        Ok(response.json::<serde_json::Value>().await?)
     }
 
     /// Registers with another device for discovery.

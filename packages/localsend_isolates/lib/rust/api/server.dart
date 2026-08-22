@@ -3,17 +3,18 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import '../frb_generated.dart';
+import 'model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
-import 'package:localsend_isolates/rust/api/model.dart';
-import 'package:localsend_isolates/rust/frb_generated.dart';
-
 part 'server.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `handle_server_event`, `handle_web_event`, `recv_opt`, `resolve_file_content`, `resolve_upload_target`, `stop`
+            // These functions are ignored because they are not marked as `pub`: `handle_home_hub_event`, `handle_server_event`, `handle_stream_event`, `handle_web_event`, `recv_opt`, `resolve_file_content`, `resolve_upload_target`, `stop`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `ServerInstance`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`, `from`
 
-/// Starts the HTTP server on the given port (IPv4 and IPv6).
+
+            /// Starts the HTTP server on the given port (IPv4 and IPv6).
 /// The server runs until [RsHttpServer::stop] is called.
 ///
 /// Passing [web] additionally serves the web pages: the download page when
@@ -25,533 +26,464 @@ part 'server.freezed.dart';
 /// [RsServerEvent::Show]). The token guards the endpoint against other clients.
 ///
 /// Events are received by listening to [RsHttpServer::listen].
-Future<RsHttpServer> startServer({
-  required int port,
-  TlsConfig? tls,
-  required String alias,
-  required String version,
-  String? deviceModel,
-  DeviceType? deviceType,
-  required String fingerprint,
-  String? pin,
-  required bool verifyChecksums,
-  WebParams? web,
-  String? showToken,
-}) => RustLib.instance.api.crateApiServerStartServer(
-  port: port,
-  tls: tls,
-  alias: alias,
-  version: version,
-  deviceModel: deviceModel,
-  deviceType: deviceType,
-  fingerprint: fingerprint,
-  pin: pin,
-  verifyChecksums: verifyChecksums,
-  web: web,
-  showToken: showToken,
-);
+Future<RsHttpServer>  startServer({required int port , TlsConfig? tls , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , String? pin , required bool verifyChecksums , WebParams? web , String? showToken , List<String>? homeHubGroupIds }) => RustLib.instance.api.crateApiServerStartServer(port: port, tls: tls, alias: alias, version: version, deviceModel: deviceModel, deviceType: deviceType, fingerprint: fingerprint, pin: pin, verifyChecksums: verifyChecksums, web: web, showToken: showToken, homeHubGroupIds: homeHubGroupIds);
 
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RsHttpServer>>
-abstract class RsHttpServer implements RustOpaqueInterface {
-  /// Cancels the active upload session, e.g. because the user aborted the
-  /// transfer on the receiving side.
-  ///
-  /// Uploads that are already in progress still run to completion, but new
-  /// upload requests fail and a new session can be created.
-  /// No [RsServerEvent::SessionEnd] is emitted: the application initiated
-  /// the cancellation itself.
-  Future<void> cancelSession({required String sessionId});
 
-  /// Fails the pending [RsServerEvent::WebFileDownload] event, e.g. because
-  /// the application failed to resolve a source for the file content.
-  ///
-  /// The download request fails with an error response.
-  /// Does nothing if the download was already answered.
-  Future<void> failFileDownload({required String sessionId, required String fileId});
+                // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RsHttpServer>>
+                abstract class RsHttpServer implements RustOpaqueInterface {
+                    /// Cancels the active upload session, e.g. because the user aborted the
+/// transfer on the receiving side.
+///
+/// Uploads that are already in progress still run to completion, but new
+/// upload requests fail and a new session can be created.
+/// No [RsServerEvent::SessionEnd] is emitted: the application initiated
+/// the cancellation itself.
+ Future<void>  cancelSession({required String sessionId });
 
-  /// Fails the pending [RsServerEvent::FileUpload] event, e.g. because
-  /// the application failed to prepare a save target for the file.
-  ///
-  /// The upload request fails with an error response and the file is marked
-  /// as failed. Does nothing if the upload was already answered.
-  Future<void> failFileUpload({required String sessionId, required String fileId});
 
-  /// Emits server events until the server is stopped.
-  /// Can only be listened to once.
-  ///
-  /// The v2 protocol, the web send (download API), and the internal endpoint
-  /// events are all emitted on the same stream.
-  ///
-  /// Also returns when the Dart side of the stream is gone (e.g. after a
-  /// hot restart), so this call does not keep the server alive forever.
-  Stream<RsServerEvent> listen();
+/// Fails the pending [RsServerEvent::WebFileDownload] event, e.g. because
+/// the application failed to resolve a source for the file content.
+///
+/// The download request fails with an error response.
+/// Does nothing if the download was already answered.
+ Future<void>  failFileDownload({required String sessionId , required String fileId });
 
-  /// Answers the pending [RsServerEvent::WebFileDownload] event with the source
-  /// the file content should be read from (either a path or a file descriptor).
-  ///
-  /// The server reads the content and streams it to the web client.
-  Future<void> respondFileDownload({required String sessionId, required String fileId, String? path, int? fileDescriptor});
 
-  /// Answers the pending [RsServerEvent::FileUpload] event with the target
-  /// the file should be saved to (either a path or a file descriptor)
-  /// and waits until the file has been received completely.
-  ///
-  /// The progress (fraction of [file_size]) is emitted on [sink]
-  /// while the file is being received. Failures are emitted on [sink] as
-  /// well: flutter_rust_bridge discards the returned `Result` of functions
-  /// taking a [StreamSink], so a returned error would become an uncaught
-  /// async error killing the calling isolate.
-  ///
-  /// Timestamps provided in the sender's file metadata are applied to the
-  /// written file by the server.
-  Stream<double> respondFileUpload({required String sessionId, required String fileId, String? path, int? fileDescriptor, required BigInt fileSize});
+/// Fails the pending [RsServerEvent::FileUpload] event, e.g. because
+/// the application failed to prepare a save target for the file.
+///
+/// The upload request fails with an error response and the file is marked
+/// as failed. Does nothing if the upload was already answered.
+ Future<void>  failFileUpload({required String sessionId , required String fileId });
 
-  /// Answers the pending [RsServerEvent::WebPrepareDownload] event.
-  ///
-  /// Passing `true` accepts the download request, `false` declines it.
-  Future<void> respondPrepareDownload({required String sessionId, required bool accept});
 
-  /// Answers a pending stream session request.
-  Future<void> respondStreamSession({required String sessionId, required bool accept});
+/// Emits server events until the server is stopped.
+/// Can only be listened to once.
+///
+/// The v2 protocol, the web send (download API), and the internal endpoint
+/// events are all emitted on the same stream.
+///
+/// Also returns when the Dart side of the stream is gone (e.g. after a
+/// hot restart), so this call does not keep the server alive forever.
+ Stream<RsServerEvent>  listen();
 
-  /// Answers a pending stream file request. The grant is read-only and temporary.
-  Future<void> respondStreamFile({required String requestId, required bool accept});
 
-  /// Answers the pending [RsServerEvent::PrepareUpload] event.
-  ///
-  /// Passing the accepted file IDs (a subset of the offered files) accepts the request.
-  /// Passing `None` declines the request.
-  Future<void> respondPrepareUpload({List<String>? acceptedFileIds});
+/// Answers the pending [RsServerEvent::WebFileDownload] event with the source
+/// the file content should be read from (either a path or a file descriptor).
+///
+/// The server reads the content and streams it to the web client.
+ Future<void>  respondFileDownload({required String sessionId , required String fileId , String? path , int? fileDescriptor });
 
-  /// Stops the server.
-  /// Returns after the listeners are closed, so the port can be bound again.
-  Future<void> stop();
-}
 
-class RegisterDtoV2 {
-  final String alias;
-  final String version;
-  final String? deviceModel;
-  final DeviceType? deviceType;
-  final String fingerprint;
-  final int port;
-  final ProtocolType protocol;
-  final bool download;
+/// Answers the pending [RsServerEvent::FileUpload] event with the target
+/// the file should be saved to (either a path or a file descriptor)
+/// and waits until the file has been received completely.
+///
+/// The progress (fraction of [file_size]) is emitted on [sink]
+/// while the file is being received. Failures are emitted on [sink] as
+/// well: flutter_rust_bridge discards the returned `Result` of functions
+/// taking a [StreamSink], so a returned error would become an uncaught
+/// async error killing the calling isolate.
+///
+/// Timestamps provided in the sender's file metadata are applied to the
+/// written file by the server.
+ Stream<double>  respondFileUpload({required String sessionId , required String fileId , String? path , int? fileDescriptor , required BigInt fileSize });
 
-  const RegisterDtoV2({
-    required this.alias,
-    required this.version,
-    this.deviceModel,
-    this.deviceType,
-    required this.fingerprint,
-    required this.port,
-    required this.protocol,
-    required this.download,
-  });
 
-  @override
-  int get hashCode =>
-      alias.hashCode ^
-      version.hashCode ^
-      deviceModel.hashCode ^
-      deviceType.hashCode ^
-      fingerprint.hashCode ^
-      port.hashCode ^
-      protocol.hashCode ^
-      download.hashCode;
+/// Answers a pending Home Hub invitation request.
+ Future<void>  respondHomeHubInvite({required String inviteId , required bool accept });
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RegisterDtoV2 &&
-          runtimeType == other.runtimeType &&
-          alias == other.alias &&
-          version == other.version &&
-          deviceModel == other.deviceModel &&
-          deviceType == other.deviceType &&
-          fingerprint == other.fingerprint &&
-          port == other.port &&
-          protocol == other.protocol &&
-          download == other.download;
-}
 
-class RsStreamEntry {
-  final String rootId;
-  final String path;
-  final String name;
-  final String kind;
-  final BigInt size;
-  final String? modifiedAt;
-  final String mimeType;
-  final bool streamable;
+/// Answers the pending [RsServerEvent::WebPrepareDownload] event.
+///
+/// Passing `true` accepts the download request, `false` declines it.
+ Future<void>  respondPrepareDownload({required String sessionId , required bool accept });
 
-  const RsStreamEntry({
-    required this.rootId,
-    required this.path,
-    required this.name,
-    required this.kind,
-    required this.size,
-    this.modifiedAt,
-    required this.mimeType,
-    required this.streamable,
-  });
 
-  @override
-  int get hashCode => Object.hash(rootId, path, name, kind, size, modifiedAt, mimeType, streamable);
+/// Answers the pending [RsServerEvent::PrepareUpload] event.
+///
+/// Passing the accepted file IDs (a subset of the offered files) accepts the request.
+/// Passing `None` declines the request.
+ Future<void>  respondPrepareUpload({List<String>? acceptedFileIds });
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RsStreamEntry &&
-          rootId == other.rootId &&
-          path == other.path &&
-          name == other.name &&
-          kind == other.kind &&
-          size == other.size &&
-          modifiedAt == other.modifiedAt &&
-          mimeType == other.mimeType &&
-          streamable == other.streamable;
-}
+
+/// Answers a pending stream file request. The grant is read-only and temporary.
+ Future<void>  respondStreamFile({required String requestId , required bool accept });
+
+
+/// Answers a pending stream session request.
+ Future<void>  respondStreamSession({required String sessionId , required bool accept });
+
+
+/// Updates the server-side allow-list used by Home Hub group events.
+ Future<void>  setHomeHubGroupIds({required List<String> groupIds });
+
+
+/// Stops the server.
+/// Returns after the listeners are closed, so the port can be bound again.
+ Future<void>  stop();
+
+
+
+
+                }
+
+
+class RegisterDtoV2  {
+                final String alias;
+final String version;
+final String? deviceModel;
+final DeviceType? deviceType;
+final String fingerprint;
+final int port;
+final ProtocolType protocol;
+final bool download;
+
+                const RegisterDtoV2({required this.alias ,required this.version ,this.deviceModel ,this.deviceType ,required this.fingerprint ,required this.port ,required this.protocol ,required this.download ,});
+
+
+
+
+
+        @override
+        int get hashCode => alias.hashCode^version.hashCode^deviceModel.hashCode^deviceType.hashCode^fingerprint.hashCode^port.hashCode^protocol.hashCode^download.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is RegisterDtoV2 &&
+                runtimeType == other.runtimeType
+                && alias == other.alias&& version == other.version&& deviceModel == other.deviceModel&& deviceType == other.deviceType&& fingerprint == other.fingerprint&& port == other.port&& protocol == other.protocol&& download == other.download;
+
+            }
+
+class RsHomeHubTransferFile  {
+                final String fileId;
+final String name;
+final BigInt size;
+
+                const RsHomeHubTransferFile({required this.fileId ,required this.name ,required this.size ,});
+
+
+
+
+
+        @override
+        int get hashCode => fileId.hashCode^name.hashCode^size.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is RsHomeHubTransferFile &&
+                runtimeType == other.runtimeType
+                && fileId == other.fileId&& name == other.name&& size == other.size;
+
+            }
 
 @freezed
-sealed class RsServerEvent with _$RsServerEvent {
-  const RsServerEvent._();
+                sealed class RsServerEvent with _$RsServerEvent  {
+                    const RsServerEvent._();
 
-  /// A device registered itself via `POST /api/localsend/v2/register`.
-  ///
-  /// On TLS, this event is only emitted when `info.fingerprint` matches the
-  /// fingerprint of the client certificate verified during the mTLS
-  /// handshake, so the fingerprint cannot be spoofed.
-  const factory RsServerEvent.register({
-    required String ip,
-    required RegisterDtoV2 info,
-  }) = RsServerEvent_Register;
+                     /// A device registered itself via `POST /api/localsend/v2/register`.
+///
+/// On TLS, this event is only emitted when `info.fingerprint` matches the
+/// fingerprint of the client certificate verified during the mTLS
+/// handshake, so the fingerprint cannot be spoofed.
+const factory RsServerEvent.register({   required String ip ,  required RegisterDtoV2 info , }) = RsServerEvent_Register;
+ /// A sender requests to upload files via `POST /api/localsend/v2/prepare-upload`.
+const factory RsServerEvent.prepareUpload({ /// The session ID the upload session will have when the request is accepted.
+  required String sessionId ,  required String ip ,  required RegisterDtoV2 info ,/// The SHA-256 fingerprint (uppercase hex) of the sender's client
+/// certificate verified during the mTLS handshake. Unlike
+/// `info.fingerprint`, this value cannot be spoofed.
+/// `None` when the server runs without TLS.
+  String? certFingerprint ,  required Map<String, FileDto> files , }) = RsServerEvent_PrepareUpload;
+ /// An accepted file is being uploaded via `POST /api/localsend/v2/upload`.
+const factory RsServerEvent.fileUpload({   required String sessionId ,  required String fileId ,  required FileDto file , }) = RsServerEvent_FileUpload;
+ /// An upload session ended.
+const factory RsServerEvent.sessionEnd({   required String sessionId ,  required SessionEndReasonV2 reason , }) = RsServerEvent_SessionEnd;
+ /// A prepare-upload request was aborted before a session was created,
+/// e.g. the sender disconnected while the application was still deciding.
+/// The [RsServerEvent::PrepareUpload] with the same session ID
+/// no longer needs to be answered.
+const factory RsServerEvent.prepareUploadAborted({   required String sessionId , }) = RsServerEvent_PrepareUploadAborted;
+ /// `POST /api/localsend/v2/cancel` was received for a session this server
+/// does not manage: the remote device cancels a transfer this application
+/// is currently *sending* to it. The application must verify that [ip]
+/// matches the target of the send session before cancelling it.
+const factory RsServerEvent.cancelReceived({   required String ip ,  required String sessionId , }) = RsServerEvent_CancelReceived;
+ /// A web client requests to download the shared files via `POST /api/localsend/v2/prepare-download`.
+///
+/// Must be answered with [RsHttpServer::respond_prepare_download].
+const factory RsServerEvent.webPrepareDownload({   required String ip ,  required String sessionId ,  String? userAgent , }) = RsServerEvent_WebPrepareDownload;
+ /// A web client downloads an offered file via `GET /api/localsend/v2/download`.
+///
+/// Must be answered with [RsHttpServer::respond_file_download].
+const factory RsServerEvent.webFileDownload({   required String sessionId ,  required String fileId ,  required FileDto file , }) = RsServerEvent_WebFileDownload;
+ /// A remote device requests a read-only browsing session.
+const factory RsServerEvent.streamPrepareSession({   required String ip ,  required String sessionId ,  String? userAgent , }) = RsServerEvent_StreamPrepareSession;
+ /// A remote device requests approval to read one selected file.
+const factory RsServerEvent.streamFileRequest({   required String ip ,  required String sessionId ,  required String requestId ,  required RsStreamEntry entry ,  required String purpose , }) = RsServerEvent_StreamFileRequest;
+ /// Another application instance requested the running application to show itself
+/// via `POST /api/localsend/v2/show`.
+const factory RsServerEvent.show_({ /// Command-line arguments forwarded by the other application instance.
+  required List<String> args , }) = RsServerEvent_Show;
+ /// A remote device sent a validated local Home Hub invitation.
+/// Must be answered with [RsHttpServer::respond_home_hub_invite].
+const factory RsServerEvent.homeHubInviteRequest({   required String ip ,  required String inviteId ,  required String groupId ,  required String groupName ,  required String senderDeviceId ,  required String senderAlias ,  required String role ,  required String createdAt ,  String? expiresAt , }) = RsServerEvent_HomeHubInviteRequest;
+ /// A validated local Home Hub chat message.
+const factory RsServerEvent.homeHubChatMessage({   required String eventId ,  required String groupId ,  required String senderDeviceId ,  required String senderAlias ,  required String text ,  required String createdAt , }) = RsServerEvent_HomeHubChatMessage;
+ /// A validated local Home Hub transfer offer that needs user approval.
+const factory RsServerEvent.homeHubTransferOffer({   required String ip ,  required String offerId ,  required String groupId ,  required String senderDeviceId ,  required String senderAlias ,  required List<RsHomeHubTransferFile> files , }) = RsServerEvent_HomeHubTransferOffer;
+ /// The listening socket failed permanently, e.g. because the OS
+/// invalidated it while the application was suspended (iOS reclaims the
+/// sockets of suspended apps). The server has stopped itself; the
+/// application must restart it to become reachable again.
+const factory RsServerEvent.listenerFailed({ /// Description of the failure.
+  required String error , }) = RsServerEvent_ListenerFailed;
 
-  /// A sender requests to upload files via `POST /api/localsend/v2/prepare-upload`.
-  const factory RsServerEvent.prepareUpload({
-    /// The session ID the upload session will have when the request is accepted.
-    required String sessionId,
-    required String ip,
-    required RegisterDtoV2 info,
 
-    /// The SHA-256 fingerprint (uppercase hex) of the sender's client
-    /// certificate verified during the mTLS handshake. Unlike
-    /// `info.fingerprint`, this value cannot be spoofed.
-    /// `None` when the server runs without TLS.
-    String? certFingerprint,
-    required Map<String, FileDto> files,
-  }) = RsServerEvent_PrepareUpload;
 
-  /// An accepted file is being uploaded via `POST /api/localsend/v2/upload`.
-  const factory RsServerEvent.fileUpload({
-    required String sessionId,
-    required String fileId,
-    required FileDto file,
-  }) = RsServerEvent_FileUpload;
 
-  /// An upload session ended.
-  const factory RsServerEvent.sessionEnd({
-    required String sessionId,
-    required SessionEndReasonV2 reason,
-  }) = RsServerEvent_SessionEnd;
+                }
 
-  /// A prepare-upload request was aborted before a session was created,
-  /// e.g. the sender disconnected while the application was still deciding.
-  /// The [RsServerEvent::PrepareUpload] with the same session ID
-  /// no longer needs to be answered.
-  const factory RsServerEvent.prepareUploadAborted({
-    required String sessionId,
-  }) = RsServerEvent_PrepareUploadAborted;
+class RsStreamEntry  {
+                final String rootId;
+final String path;
+final String name;
+final String kind;
+final BigInt size;
+final String? modifiedAt;
+final String mimeType;
+final bool streamable;
 
-  /// `POST /api/localsend/v2/cancel` was received for a session this server
-  /// does not manage: the remote device cancels a transfer this application
-  /// is currently *sending* to it. The application must verify that [ip]
-  /// matches the target of the send session before cancelling it.
-  const factory RsServerEvent.cancelReceived({
-    required String ip,
-    required String sessionId,
-  }) = RsServerEvent_CancelReceived;
+                const RsStreamEntry({required this.rootId ,required this.path ,required this.name ,required this.kind ,required this.size ,this.modifiedAt ,required this.mimeType ,required this.streamable ,});
 
-  /// A web client requests to download the shared files via `POST /api/localsend/v2/prepare-download`.
-  ///
-  /// Must be answered with [RsHttpServer::respond_prepare_download].
-  const factory RsServerEvent.webPrepareDownload({
-    required String ip,
-    required String sessionId,
-    String? userAgent,
-  }) = RsServerEvent_WebPrepareDownload;
 
-  /// A web client downloads an offered file via `GET /api/localsend/v2/download`.
-  ///
-  /// Must be answered with [RsHttpServer::respond_file_download].
-  const factory RsServerEvent.webFileDownload({
-    required String sessionId,
-    required String fileId,
-    required FileDto file,
-  }) = RsServerEvent_WebFileDownload;
 
-  /// A remote device requests a read-only browsing session.
-  const factory RsServerEvent.streamPrepareSession({
-    required String ip,
-    required String sessionId,
-    String? userAgent,
-  }) = RsServerEvent_StreamPrepareSession;
 
-  /// A remote device requests approval to read one selected file.
-  const factory RsServerEvent.streamFileRequest({
-    required String ip,
-    required String sessionId,
-    required String requestId,
-    required RsStreamEntry entry,
-    required String purpose,
-  }) = RsServerEvent_StreamFileRequest;
 
-  /// Another application instance requested the running application to show itself
-  /// via `POST /api/localsend/v2/show`.
-  const factory RsServerEvent.show_({
-    /// Command-line arguments forwarded by the other application instance.
-    required List<String> args,
-  }) = RsServerEvent_Show;
+        @override
+        int get hashCode => rootId.hashCode^path.hashCode^name.hashCode^kind.hashCode^size.hashCode^modifiedAt.hashCode^mimeType.hashCode^streamable.hashCode;
 
-  /// The listening socket failed permanently, e.g. because the OS
-  /// invalidated it while the application was suspended (iOS reclaims the
-  /// sockets of suspended apps). The server has stopped itself; the
-  /// application must restart it to become reachable again.
-  const factory RsServerEvent.listenerFailed({
-    /// Description of the failure.
-    required String error,
-  }) = RsServerEvent_ListenerFailed;
-}
 
-class RsServerEvent_StreamPrepareSession extends RsServerEvent {
-  final String ip;
-  final String sessionId;
-  final String? userAgent;
 
-  const RsServerEvent_StreamPrepareSession({required this.ip, required this.sessionId, this.userAgent}) : super._();
-}
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is RsStreamEntry &&
+                runtimeType == other.runtimeType
+                && rootId == other.rootId&& path == other.path&& name == other.name&& kind == other.kind&& size == other.size&& modifiedAt == other.modifiedAt&& mimeType == other.mimeType&& streamable == other.streamable;
 
-class RsServerEvent_StreamFileRequest extends RsServerEvent {
-  final String ip;
-  final String sessionId;
-  final String requestId;
-  final RsStreamEntry entry;
-  final String purpose;
-
-  const RsServerEvent_StreamFileRequest({
-    required this.ip,
-    required this.sessionId,
-    required this.requestId,
-    required this.entry,
-    required this.purpose,
-  }) : super._();
-}
+            }
 
 enum SessionEndReasonV2 {
-  finished,
-  cancelled,
-}
+                    finished,
+cancelled,
+                    ;
 
-class TlsConfig {
-  final String cert;
-  final String privateKey;
+                }
 
-  const TlsConfig({
-    required this.cert,
-    required this.privateKey,
-  });
+/// Configuration for the read-only Stream & Browse API.
+class StreamParams  {
+                final List<StreamRootParams> roots;
 
-  @override
-  int get hashCode => cert.hashCode ^ privateKey.hashCode;
+                const StreamParams({required this.roots ,});
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is TlsConfig && runtimeType == other.runtimeType && cert == other.cert && privateKey == other.privateKey;
-}
 
-class WebI18n {
-  final String waiting;
-  final String enterPin;
-  final String invalidPin;
-  final String tooManyAttempts;
-  final String rejected;
-  final String uploadRejected;
-  final String busy;
-  final String files;
-  final String fileName;
-  final String size;
-  final String dropHint;
 
-  const WebI18n({
-    required this.waiting,
-    required this.enterPin,
-    required this.invalidPin,
-    required this.tooManyAttempts,
-    required this.rejected,
-    required this.uploadRejected,
-    required this.busy,
-    required this.files,
-    required this.fileName,
-    required this.size,
-    required this.dropHint,
-  });
 
-  @override
-  int get hashCode =>
-      waiting.hashCode ^
-      enterPin.hashCode ^
-      invalidPin.hashCode ^
-      tooManyAttempts.hashCode ^
-      rejected.hashCode ^
-      uploadRejected.hashCode ^
-      busy.hashCode ^
-      files.hashCode ^
-      fileName.hashCode ^
-      size.hashCode ^
-      dropHint.hashCode;
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WebI18n &&
-          runtimeType == other.runtimeType &&
-          waiting == other.waiting &&
-          enterPin == other.enterPin &&
-          invalidPin == other.invalidPin &&
-          tooManyAttempts == other.tooManyAttempts &&
-          rejected == other.rejected &&
-          uploadRejected == other.uploadRejected &&
-          busy == other.busy &&
-          files == other.files &&
-          fileName == other.fileName &&
-          size == other.size &&
-          dropHint == other.dropHint;
-}
+        @override
+        int get hashCode => roots.hashCode;
 
-class WebPages {
-  final String? downloadHtml;
-  final String? uploadHtml;
-  final String? error403Html;
 
-  const WebPages({
-    this.downloadHtml,
-    this.uploadHtml,
-    this.error403Html,
-  });
 
-  @override
-  int get hashCode => downloadHtml.hashCode ^ uploadHtml.hashCode ^ error403Html.hashCode;
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is StreamParams &&
+                runtimeType == other.runtimeType
+                && roots == other.roots;
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WebPages &&
-          runtimeType == other.runtimeType &&
-          downloadHtml == other.downloadHtml &&
-          uploadHtml == other.uploadHtml &&
-          error403Html == other.error403Html;
-}
+            }
+
+/// A user-selected local root exposed to approved peers.
+class StreamRootParams  {
+                final String id;
+final String name;
+final String path;
+
+                const StreamRootParams({required this.id ,required this.name ,required this.path ,});
+
+
+
+
+
+        @override
+        int get hashCode => id.hashCode^name.hashCode^path.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is StreamRootParams &&
+                runtimeType == other.runtimeType
+                && id == other.id&& name == other.name&& path == other.path;
+
+            }
+
+class TlsConfig  {
+                final String cert;
+final String privateKey;
+
+                const TlsConfig({required this.cert ,required this.privateKey ,});
+
+
+
+
+
+        @override
+        int get hashCode => cert.hashCode^privateKey.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is TlsConfig &&
+                runtimeType == other.runtimeType
+                && cert == other.cert&& privateKey == other.privateKey;
+
+            }
+
+class WebI18n  {
+                final String waiting;
+final String enterPin;
+final String invalidPin;
+final String tooManyAttempts;
+final String rejected;
+final String uploadRejected;
+final String busy;
+final String files;
+final String fileName;
+final String size;
+final String dropHint;
+
+                const WebI18n({required this.waiting ,required this.enterPin ,required this.invalidPin ,required this.tooManyAttempts ,required this.rejected ,required this.uploadRejected ,required this.busy ,required this.files ,required this.fileName ,required this.size ,required this.dropHint ,});
+
+
+
+
+
+        @override
+        int get hashCode => waiting.hashCode^enterPin.hashCode^invalidPin.hashCode^tooManyAttempts.hashCode^rejected.hashCode^uploadRejected.hashCode^busy.hashCode^files.hashCode^fileName.hashCode^size.hashCode^dropHint.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is WebI18n &&
+                runtimeType == other.runtimeType
+                && waiting == other.waiting&& enterPin == other.enterPin&& invalidPin == other.invalidPin&& tooManyAttempts == other.tooManyAttempts&& rejected == other.rejected&& uploadRejected == other.uploadRejected&& busy == other.busy&& files == other.files&& fileName == other.fileName&& size == other.size&& dropHint == other.dropHint;
+
+            }
+
+class WebPages  {
+                final String? downloadHtml;
+final String? uploadHtml;
+final String? error403Html;
+
+                const WebPages({this.downloadHtml ,this.uploadHtml ,this.error403Html ,});
+
+
+
+
+
+        @override
+        int get hashCode => downloadHtml.hashCode^uploadHtml.hashCode^error403Html.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is WebPages &&
+                runtimeType == other.runtimeType
+                && downloadHtml == other.downloadHtml&& uploadHtml == other.uploadHtml&& error403Html == other.error403Html;
+
+            }
 
 /// Configuration for the web pages served to browsers. When omitted, the web
 /// pages respond with 403 and only the v2 endpoints run.
-class StreamParams {
-  final List<StreamRootParams> roots;
+class WebParams  {
+                /// Enables the optional read-only Stream & Browse API.
+final StreamParams? stream;
+/// Enables web send (the download page): files offered for download by web
+/// browsers. `null` disables the download page and the download API.
+final WebSendParams? send;
+/// Serves the upload page so web browsers can upload files via the v2
+/// `prepare-upload`/`upload` endpoints. Ignored when [WebParams::send] is
+/// set: the download page takes precedence at `/`.
+final bool upload;
+/// Translations for the web pages, served via `/i18n.json`.
+final WebI18n i18N;
+/// Custom HTML pages replacing the embedded web pages.
+/// Pages left `null` (or the whole struct being `null`) are served from
+/// the assets embedded at compile time.
+final WebPages? pages;
 
-  const StreamParams({required this.roots});
+                const WebParams({this.stream ,this.send ,required this.upload ,required this.i18N ,this.pages ,});
 
-  @override
-  int get hashCode => Object.hashAll(roots);
 
-  @override
-  bool operator ==(Object other) => identical(this, other) || other is StreamParams && _listEquals(roots, other.roots);
-}
 
-class StreamRootParams {
-  final String id;
-  final String name;
-  final String path;
 
-  const StreamRootParams({required this.id, required this.name, required this.path});
 
-  @override
-  int get hashCode => Object.hash(id, name, path);
+        @override
+        int get hashCode => stream.hashCode^send.hashCode^upload.hashCode^i18N.hashCode^pages.hashCode;
 
-  @override
-  bool operator ==(Object other) => identical(this, other) || other is StreamRootParams && id == other.id && name == other.name && path == other.path;
-}
 
-bool _listEquals<T>(List<T> a, List<T> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
-}
 
-class WebParams {
-  /// Enables the optional read-only Stream & Browse API.
-  final StreamParams? stream;
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is WebParams &&
+                runtimeType == other.runtimeType
+                && stream == other.stream&& send == other.send&& upload == other.upload&& i18N == other.i18N&& pages == other.pages;
 
-  /// Enables web send (the download page): files offered for download by web
-  /// browsers. `null` disables the download page and the download API.
-  final WebSendParams? send;
-
-  /// Serves the upload page so web browsers can upload files via the v2
-  /// `prepare-upload`/`upload` endpoints. Ignored when [WebParams::send] is
-  /// set: the download page takes precedence at `/`.
-  final bool upload;
-
-  /// Translations for the web pages, served via `/i18n.json`.
-  final WebI18n i18N;
-
-  /// Custom HTML pages replacing the embedded web pages.
-  /// Pages left `null` (or the whole struct being `null`) are served from
-  /// the assets embedded at compile time.
-  final WebPages? pages;
-
-  const WebParams({
-    this.stream,
-    this.send,
-    required this.upload,
-    required this.i18N,
-    this.pages,
-  });
-
-  @override
-  int get hashCode => Object.hash(stream, send, upload, i18N, pages);
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WebParams &&
-          runtimeType == other.runtimeType &&
-          stream == other.stream &&
-          send == other.send &&
-          upload == other.upload &&
-          i18N == other.i18N &&
-          pages == other.pages;
-}
+            }
 
 /// Configuration for web send: files offered for download by web browsers.
 ///
 /// Web send can be enabled independently of the v2 protocol endpoints.
-class WebSendParams {
-  /// The metadata of the files offered for download, mapped by file ID.
-  /// The content is requested per download via [RsServerEvent::WebFileDownload].
-  final Map<String, FileDto> files;
+class WebSendParams  {
+                /// The metadata of the files offered for download, mapped by file ID.
+/// The content is requested per download via [RsServerEvent::WebFileDownload].
+final Map<String, FileDto> files;
+/// Optional PIN that web clients must provide via the `pin` query parameter.
+final String? pin;
 
-  /// Optional PIN that web clients must provide via the `pin` query parameter.
-  final String? pin;
+                const WebSendParams({required this.files ,this.pin ,});
 
-  const WebSendParams({
-    required this.files,
-    this.pin,
-  });
 
-  @override
-  int get hashCode => files.hashCode ^ pin.hashCode;
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is WebSendParams && runtimeType == other.runtimeType && files == other.files && pin == other.pin;
-}
+
+
+        @override
+        int get hashCode => files.hashCode^pin.hashCode;
+
+
+
+        @override
+        bool operator ==(Object other) =>
+            identical(this, other) ||
+            other is WebSendParams &&
+                runtimeType == other.runtimeType
+                && files == other.files&& pin == other.pin;
+
+            }

@@ -1,15 +1,16 @@
 use crate::frb_generated::StreamSink;
 use flutter_rust_bridge::frb;
 pub use localsend::http::dto_v2::RegisterDtoV2;
-use localsend::http::server::ServerConfigV2;
-pub use localsend::http::server::TlsConfig;
 use localsend::http::server::common::save::FileUploadTarget;
+use localsend::http::server::home_hub::{HomeHubConfig, HomeHubEvent};
 use localsend::http::server::internal::{InternalConfig, InternalEvent};
+use localsend::http::server::stream::{StreamConfig, StreamEvent, StreamRoot};
 pub use localsend::http::server::v2::SessionEndReasonV2;
 use localsend::http::server::v2::{PrepareUploadDecisionV2, ServerEventV2};
-pub use localsend::http::server::web::{WebI18n, WebPages};
-use localsend::http::server::stream::{StreamConfig, StreamEvent, StreamRoot};
 use localsend::http::server::web::{WebConfig, WebSendConfig, WebSendEvent};
+pub use localsend::http::server::web::{WebI18n, WebPages};
+use localsend::http::server::ServerConfigV2;
+pub use localsend::http::server::TlsConfig;
 use localsend::http::state::ClientInfo;
 use localsend::model::discovery::DeviceType;
 use localsend::model::discovery::ProtocolType;
@@ -18,7 +19,14 @@ use localsend::model::transfer::{FileContent, FileDto};
 use localsend::http::server::stream::StreamEntry;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex};
+
+#[derive(Clone, Debug)]
+pub struct RsHomeHubTransferFile {
+    pub file_id: String,
+    pub name: String,
+    pub size: u64,
+}
 
 #[derive(Clone, Debug)]
 pub struct RsStreamEntry {
@@ -144,6 +152,38 @@ pub enum RsServerEvent {
         args: Vec<String>,
     },
 
+    /// A remote device sent a validated local Home Hub invitation.
+    /// Must be answered with [RsHttpServer::respond_home_hub_invite].
+    HomeHubInviteRequest {
+        ip: String,
+        invite_id: String,
+        group_id: String,
+        group_name: String,
+        sender_device_id: String,
+        sender_alias: String,
+        role: String,
+        created_at: String,
+        expires_at: Option<String>,
+    },
+    /// A validated local Home Hub chat message.
+    HomeHubChatMessage {
+        event_id: String,
+        group_id: String,
+        sender_device_id: String,
+        sender_alias: String,
+        text: String,
+        created_at: String,
+    },
+    /// A validated local Home Hub transfer offer that needs user approval.
+    HomeHubTransferOffer {
+        ip: String,
+        offer_id: String,
+        group_id: String,
+        sender_device_id: String,
+        sender_alias: String,
+        files: Vec<RsHomeHubTransferFile>,
+    },
+
     /// The listening socket failed permanently, e.g. because the OS
     /// invalidated it while the application was suspended (iOS reclaims the
     /// sockets of suspended apps). The server has stopped itself; the
@@ -161,9 +201,11 @@ pub struct RsHttpServer {
     pending_uploads: Mutex<HashMap<(String, String), oneshot::Sender<FileUploadTarget>>>,
     web_event_rx: Mutex<Option<mpsc::Receiver<WebSendEvent>>>,
     stream_event_rx: Mutex<Option<mpsc::Receiver<StreamEvent>>>,
+    home_hub_event_rx: Mutex<Option<mpsc::Receiver<HomeHubEvent>>>,
     pending_download_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
     pending_stream_session_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
     pending_stream_file_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
+    pending_home_hub_decisions: Mutex<HashMap<String, oneshot::Sender<bool>>>,
     pending_downloads: Mutex<HashMap<(String, String), oneshot::Sender<FileContent>>>,
     internal_event_rx: Mutex<Option<mpsc::Receiver<InternalEvent>>>,
 }
@@ -265,6 +307,7 @@ pub async fn start_server(
     verify_checksums: bool,
     web: Option<WebParams>,
     show_token: Option<String>,
+    home_hub_group_ids: Option<Vec<String>>,
 ) -> anyhow::Result<RsHttpServer> {
     // Stop a server left over from before a hot restart (its Dart owner died
     // without calling stop)
@@ -274,6 +317,7 @@ pub async fn start_server(
     }
 
     let (event_tx, event_rx) = mpsc::channel::<ServerEventV2>(16);
+    let (home_hub_event_tx, home_hub_event_rx) = mpsc::channel::<HomeHubEvent>(16);
     let (stop_tx, stop_rx) = oneshot::channel::<()>();
 
     let (web_config, web_event_rx, stream_event_rx) = match web {
@@ -333,7 +377,7 @@ pub async fn start_server(
         None => (None, None),
     };
 
-    let handle = localsend::http::server::start_with_port(
+    let handle = localsend::http::server::start_with_port_and_home_hub(
         port,
         tls,
         ClientInfo {
@@ -350,6 +394,10 @@ pub async fn start_server(
             event_tx,
         }),
         web_config,
+        Some(HomeHubConfig {
+            event_tx: home_hub_event_tx,
+            allowed_group_ids: home_hub_group_ids.unwrap_or_default(),
+        }),
         stop_rx,
     )
     .await?;
@@ -367,9 +415,11 @@ pub async fn start_server(
         pending_uploads: Mutex::new(HashMap::new()),
         web_event_rx: Mutex::new(web_event_rx),
         stream_event_rx: Mutex::new(stream_event_rx),
+        home_hub_event_rx: Mutex::new(Some(home_hub_event_rx)),
         pending_download_decisions: Mutex::new(HashMap::new()),
         pending_stream_session_decisions: Mutex::new(HashMap::new()),
         pending_stream_file_decisions: Mutex::new(HashMap::new()),
+        pending_home_hub_decisions: Mutex::new(HashMap::new()),
         pending_downloads: Mutex::new(HashMap::new()),
         internal_event_rx: Mutex::new(internal_event_rx),
     })
@@ -391,6 +441,7 @@ impl RsHttpServer {
         };
         let mut web_event_rx = self.web_event_rx.lock().await.take();
         let mut stream_event_rx = self.stream_event_rx.lock().await.take();
+        let mut home_hub_event_rx = self.home_hub_event_rx.lock().await.take();
         let mut internal_event_rx = self.internal_event_rx.lock().await.take();
 
         let mut v2_open = true;
@@ -423,6 +474,15 @@ impl RsHttpServer {
                         }
                     }
                 }
+                event = recv_opt(&mut home_hub_event_rx) => {
+                    match event {
+                        Some(event) => self.handle_home_hub_event(&sink, event).await,
+                        None => {
+                            home_hub_event_rx = None;
+                            true
+                        }
+                    }
+                }
                 event = recv_opt(&mut internal_event_rx) => {
                     match event {
                         Some(InternalEvent::Show { args }) => {
@@ -441,7 +501,12 @@ impl RsHttpServer {
                 break;
             }
 
-            if !v2_open && web_event_rx.is_none() && stream_event_rx.is_none() && internal_event_rx.is_none() {
+            if !v2_open
+                && web_event_rx.is_none()
+                && stream_event_rx.is_none()
+                && home_hub_event_rx.is_none()
+                && internal_event_rx.is_none()
+            {
                 break;
             }
         }
@@ -571,6 +636,92 @@ impl RsHttpServer {
                     request_id,
                     entry: entry.into(),
                     purpose,
+                })
+                .is_ok()
+            }
+        }
+    }
+
+    /// Returns whether the sink is still open.
+    async fn handle_home_hub_event(
+        &self,
+        sink: &StreamSink<RsServerEvent>,
+        event: HomeHubEvent,
+    ) -> bool {
+        match event {
+            HomeHubEvent::InviteRequest {
+                ip,
+                invite_id,
+                group_id,
+                group_name,
+                sender_device_id,
+                sender_alias,
+                role,
+                created_at,
+                expires_at,
+                decision_tx,
+            } => {
+                self.pending_home_hub_decisions
+                    .lock()
+                    .await
+                    .insert(invite_id.clone(), decision_tx);
+                sink.add(RsServerEvent::HomeHubInviteRequest {
+                    ip: ip.to_string(),
+                    invite_id,
+                    group_id,
+                    group_name,
+                    sender_device_id,
+                    sender_alias,
+                    role,
+                    created_at,
+                    expires_at,
+                })
+                .is_ok()
+            }
+            HomeHubEvent::ChatMessage {
+                event_id,
+                group_id,
+                sender_device_id,
+                sender_alias,
+                text,
+                created_at,
+            } => sink
+                .add(RsServerEvent::HomeHubChatMessage {
+                    event_id,
+                    group_id,
+                    sender_device_id,
+                    sender_alias,
+                    text,
+                    created_at,
+                })
+                .is_ok(),
+            HomeHubEvent::TransferOffer {
+                ip,
+                offer_id,
+                group_id,
+                sender_device_id,
+                sender_alias,
+                files,
+                decision_tx,
+            } => {
+                self.pending_home_hub_decisions
+                    .lock()
+                    .await
+                    .insert(offer_id.clone(), decision_tx);
+                sink.add(RsServerEvent::HomeHubTransferOffer {
+                    ip: ip.to_string(),
+                    offer_id,
+                    group_id,
+                    sender_device_id,
+                    sender_alias,
+                    files: files
+                        .into_iter()
+                        .map(|file| RsHomeHubTransferFile {
+                            file_id: file.file_id,
+                            name: file.name,
+                            size: file.size,
+                        })
+                        .collect(),
                 })
                 .is_ok()
             }
@@ -757,8 +908,37 @@ impl RsHttpServer {
         Ok(())
     }
 
+    /// Updates the server-side allow-list used by Home Hub group events.
+    pub async fn set_home_hub_group_ids(&self, group_ids: Vec<String>) -> anyhow::Result<()> {
+        self.instance.handle.set_home_hub_group_ids(group_ids).await
+    }
+
+    /// Answers a pending Home Hub invitation request.
+    pub async fn respond_home_hub_invite(
+        &self,
+        invite_id: String,
+        accept: bool,
+    ) -> anyhow::Result<()> {
+        let Some(decision_tx) = self
+            .pending_home_hub_decisions
+            .lock()
+            .await
+            .remove(&invite_id)
+        else {
+            return Err(anyhow::anyhow!("No pending Home Hub invitation"));
+        };
+        decision_tx
+            .send(accept)
+            .map_err(|_| anyhow::anyhow!("Home Hub invitation already ended"))?;
+        Ok(())
+    }
+
     /// Answers a pending stream session request.
-    pub async fn respond_stream_session(&self, session_id: String, accept: bool) -> anyhow::Result<()> {
+    pub async fn respond_stream_session(
+        &self,
+        session_id: String,
+        accept: bool,
+    ) -> anyhow::Result<()> {
         let Some(decision_tx) = self
             .pending_stream_session_decisions
             .lock()
@@ -774,7 +954,11 @@ impl RsHttpServer {
     }
 
     /// Answers a pending stream file request. The grant is read-only and temporary.
-    pub async fn respond_stream_file(&self, request_id: String, accept: bool) -> anyhow::Result<()> {
+    pub async fn respond_stream_file(
+        &self,
+        request_id: String,
+        accept: bool,
+    ) -> anyhow::Result<()> {
         let Some(decision_tx) = self
             .pending_stream_file_decisions
             .lock()

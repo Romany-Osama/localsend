@@ -68,7 +68,7 @@ import 'package:uuid/uuid.dart';
 
                   @override
                   Future<void> executeRustInitializers() async {
-                    
+
                   }
 
                   @override
@@ -78,7 +78,7 @@ import 'package:uuid/uuid.dart';
                   String get codegenVersion => '2.12.0';
 
                   @override
-                  int get rustContentHash => 2109929442;
+                  int get rustContentHash => 2147081203;
 
                   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
                     stem: 'rust_lib_localsend_app',
@@ -87,7 +87,7 @@ import 'package:uuid/uuid.dart';
                     wasmBindgenName: 'wasm_bindgen',
                   );
                 }
-                
+
 
                 abstract class RustLibApi extends BaseApi {
                   Future<void> crateApiStreamDart2RustStreamSinkAdd({required Dart2RustStreamSink that , required List<int> data });
@@ -122,6 +122,8 @@ Future<void> crateApiDiscoveryRsDiscoveryStop({required RsDiscovery that });
 
 Future<void> crateApiHttpRsHttpClientCancel({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required String sessionId });
 
+Future<String> crateApiHttpRsHttpClientPostJson({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required String path , required String body });
+
 Future<PrepareUploadResult> crateApiHttpRsHttpClientPrepareUpload({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required PrepareUploadRequestDto payload , String? publicKey , String? pin , required RsCancellationToken cancelToken });
 
 Future<ResultWithPublicKeyRegisterResponseDto> crateApiHttpRsHttpClientRegister({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required RegisterDto payload });
@@ -140,6 +142,8 @@ Future<void> crateApiServerRsHttpServerRespondFileDownload({required RsHttpServe
 
 Stream<double> crateApiServerRsHttpServerRespondFileUpload({required RsHttpServer that , required String sessionId , required String fileId , String? path , int? fileDescriptor , required BigInt fileSize });
 
+Future<void> crateApiServerRsHttpServerRespondHomeHubInvite({required RsHttpServer that , required String inviteId , required bool accept });
+
 Future<void> crateApiServerRsHttpServerRespondPrepareDownload({required RsHttpServer that , required String sessionId , required bool accept });
 
 Future<void> crateApiServerRsHttpServerRespondPrepareUpload({required RsHttpServer that , List<String>? acceptedFileIds });
@@ -147,6 +151,8 @@ Future<void> crateApiServerRsHttpServerRespondPrepareUpload({required RsHttpServ
 Future<void> crateApiServerRsHttpServerRespondStreamFile({required RsHttpServer that , required String requestId , required bool accept });
 
 Future<void> crateApiServerRsHttpServerRespondStreamSession({required RsHttpServer that , required String sessionId , required bool accept });
+
+Future<void> crateApiServerRsHttpServerSetHomeHubGroupIds({required RsHttpServer that , required List<String> groupIds });
 
 Future<void> crateApiServerRsHttpServerStop({required RsHttpServer that });
 
@@ -206,7 +212,7 @@ String crateApiFilenameSanitizeFileName({required String name });
 
 Future<RsDiscovery> crateApiDiscoveryStartDiscovery({required String group , required int port , List<String>? networkWhitelist , List<String>? networkBlacklist , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , required ProtocolType protocol , required bool download , required String certPem , required String privateKeyPem , required BigInt timeoutMs });
 
-Future<RsHttpServer> crateApiServerStartServer({required int port , TlsConfig? tls , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , String? pin , required bool verifyChecksums , WebParams? web , String? showToken });
+Future<RsHttpServer> crateApiServerStartServer({required int port , TlsConfig? tls , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , String? pin , required bool verifyChecksums , WebParams? web , String? showToken , List<String>? homeHubGroupIds });
 
 Future<void> crateApiCryptoVerifyCert({required String cert , required String publicKey });
 
@@ -278,7 +284,7 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr;
 
 
                 }
-                
+
 
                 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
                   RustLibApiImpl({
@@ -290,13 +296,13 @@ CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_RsHttpServerPtr;
 
                   @override Future<void> crateApiStreamDart2RustStreamSinkAdd({required Dart2RustStreamSink that , required List<int> data })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDart2RustStreamSink(that, serializer);
 sse_encode_list_prim_u_8_loose(data, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_String,
@@ -312,16 +318,16 @@ sse_encode_list_prim_u_8_loose(data, serializer);
             debugName: "Dart2RustStreamSink_add",
             argNames: ["that", "data"],
         );
-        
+
 
 @override void crateApiStreamDart2RustStreamSinkClose({required Dart2RustStreamSink that })  { return handler.executeSync(SyncTask(
             callFfi: () {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDart2RustStreamSink(that, serializer);
             return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -337,11 +343,11 @@ sse_encode_list_prim_u_8_loose(data, serializer);
             debugName: "Dart2RustStreamSink_close",
             argNames: ["that"],
         );
-        
+
 
 @override Future<RtcReceiveController> crateApiWebrtcLsSignalingConnectionAcceptOffer({required LsSignalingConnection that , required List<String> stunServers , required WsServerSdpMessage offer , required String privateKey , ExpectingPublicKey? expectingPublicKey , PinConfig? pin })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLsSignalingConnection(that, serializer);
 sse_encode_list_String(stunServers, serializer);
 sse_encode_box_autoadd_ws_server_sdp_message(offer, serializer);
@@ -349,9 +355,9 @@ sse_encode_String(privateKey, serializer);
 sse_encode_opt_box_autoadd_expecting_public_key(expectingPublicKey, serializer);
 sse_encode_opt_box_autoadd_pin_config(pin, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController,
           decodeErrorData: sse_decode_AnyhowException,
@@ -367,11 +373,11 @@ sse_encode_opt_box_autoadd_pin_config(pin, serializer);
             debugName: "LsSignalingConnection_accept_offer",
             argNames: ["that", "stunServers", "offer", "privateKey", "expectingPublicKey", "pin"],
         );
-        
+
 
 @override Future<RtcSendController> crateApiWebrtcLsSignalingConnectionSendOffer({required LsSignalingConnection that , required List<String> stunServers , required UuidValue target , required String privateKey , ExpectingPublicKey? expectingPublicKey , PinConfig? pin , required List<FileDto> files })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLsSignalingConnection(that, serializer);
 sse_encode_list_String(stunServers, serializer);
 sse_encode_Uuid(target, serializer);
@@ -380,9 +386,9 @@ sse_encode_opt_box_autoadd_expecting_public_key(expectingPublicKey, serializer);
 sse_encode_opt_box_autoadd_pin_config(pin, serializer);
 sse_encode_list_file_dto(files, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController,
           decodeErrorData: sse_decode_AnyhowException,
@@ -398,17 +404,17 @@ sse_encode_list_file_dto(files, serializer);
             debugName: "LsSignalingConnection_send_offer",
             argNames: ["that", "stunServers", "target", "privateKey", "expectingPublicKey", "pin", "files"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcLsSignalingConnectionUpdateInfo({required LsSignalingConnection that , required ClientInfoWithoutId info })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLsSignalingConnection(that, serializer);
 sse_encode_box_autoadd_client_info_without_id(info, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -424,16 +430,16 @@ sse_encode_box_autoadd_client_info_without_id(info, serializer);
             debugName: "LsSignalingConnection_update_info",
             argNames: ["that", "info"],
         );
-        
+
 
 @override void crateApiCancelRsCancellationTokenCancel({required RsCancellationToken that })  { return handler.executeSync(SyncTask(
             callFfi: () {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsCancellationToken(that, serializer);
             return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -449,17 +455,17 @@ sse_encode_box_autoadd_client_info_without_id(info, serializer);
             debugName: "RsCancellationToken_cancel",
             argNames: ["that"],
         );
-        
+
 
 @override Future<void> crateApiDiscoveryRsDiscoveryAddDevice({required RsDiscovery that , required RsDiscoveredDevice device })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
 sse_encode_box_autoadd_rs_discovered_device(device, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -475,16 +481,16 @@ sse_encode_box_autoadd_rs_discovered_device(device, serializer);
             debugName: "RsDiscovery_add_device",
             argNames: ["that", "device"],
         );
-        
+
 
 @override Future<void> crateApiDiscoveryRsDiscoveryAnnounce({required RsDiscovery that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -500,17 +506,17 @@ sse_encode_box_autoadd_rs_discovered_device(device, serializer);
             debugName: "RsDiscovery_announce",
             argNames: ["that"],
         );
-        
+
 
 @override Future<List<RsDeviceLog>> crateApiDiscoveryRsDiscoveryDeviceLogs({required RsDiscovery that , required String fingerprint })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
 sse_encode_String(fingerprint, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_list_rs_device_log,
           decodeErrorData: null,
@@ -526,11 +532,11 @@ sse_encode_String(fingerprint, serializer);
             debugName: "RsDiscovery_device_logs",
             argNames: ["that", "fingerprint"],
         );
-        
+
 
 @override Future<void> crateApiDiscoveryRsDiscoveryDiscoverStaged({required RsDiscovery that , required List<RsDeviceChannel> channels , required List<String> interfaceIps , required int port , required ProtocolType protocol , required BigInt graceMs })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
 sse_encode_list_rs_device_channel(channels, serializer);
 sse_encode_list_String(interfaceIps, serializer);
@@ -538,9 +544,9 @@ sse_encode_u_16(port, serializer);
 sse_encode_protocol_type(protocol, serializer);
 sse_encode_u_64(graceMs, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -556,19 +562,19 @@ sse_encode_u_64(graceMs, serializer);
             debugName: "RsDiscovery_discover_staged",
             argNames: ["that", "channels", "interfaceIps", "port", "protocol", "graceMs"],
         );
-        
 
-@override Stream<RsStoredDevice> crateApiDiscoveryRsDiscoveryListen({required RsDiscovery that })  { 
+
+@override Stream<RsStoredDevice> crateApiDiscoveryRsDiscoveryListen({required RsDiscovery that })  {
             final sink = RustStreamSink<RsStoredDevice>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
 sse_encode_StreamSink_rs_stored_device_Sse(sink, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -586,16 +592,16 @@ sse_encode_StreamSink_rs_stored_device_Sse(sink, serializer);
             debugName: "RsDiscovery_listen",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<String?> crateApiDiscoveryRsDiscoveryMulticastError({required RsDiscovery that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_opt_String,
           decodeErrorData: null,
@@ -611,19 +617,19 @@ sse_encode_StreamSink_rs_stored_device_Sse(sink, serializer);
             debugName: "RsDiscovery_multicast_error",
             argNames: ["that"],
         );
-        
+
 
 @override Future<void> crateApiDiscoveryRsDiscoveryScanSubnet({required RsDiscovery that , required String interfaceIp , required int port , required ProtocolType protocol })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
 sse_encode_String(interfaceIp, serializer);
 sse_encode_u_16(port, serializer);
 sse_encode_protocol_type(protocol, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -639,17 +645,17 @@ sse_encode_protocol_type(protocol, serializer);
             debugName: "RsDiscovery_scan_subnet",
             argNames: ["that", "interfaceIp", "port", "protocol"],
         );
-        
+
 
 @override Future<void> crateApiDiscoveryRsDiscoverySetAnswerAnnouncements({required RsDiscovery that , required bool answer })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
 sse_encode_bool(answer, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -665,16 +671,16 @@ sse_encode_bool(answer, serializer);
             debugName: "RsDiscovery_set_answer_announcements",
             argNames: ["that", "answer"],
         );
-        
+
 
 @override Future<void> crateApiDiscoveryRsDiscoveryStop({required RsDiscovery that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery(that, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -690,20 +696,20 @@ sse_encode_bool(answer, serializer);
             debugName: "RsDiscovery_stop",
             argNames: ["that"],
         );
-        
+
 
 @override Future<void> crateApiHttpRsHttpClientCancel({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required String sessionId })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpClient(that, serializer);
 sse_encode_protocol_type(protocol, serializer);
 sse_encode_String(ip, serializer);
 sse_encode_u_16(port, serializer);
 sse_encode_String(sessionId, serializer);
             pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16, port: port_);
-            
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_rs_http_client_error,
@@ -719,11 +725,41 @@ sse_encode_String(sessionId, serializer);
             debugName: "RsHttpClient_cancel",
             argNames: ["that", "protocol", "ip", "port", "sessionId"],
         );
-        
+
+
+@override Future<String> crateApiHttpRsHttpClientPostJson({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required String path , required String body })  { return handler.executeNormal(NormalTask(
+            callFfi: (port_) {
+
+            final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpClient(that, serializer);
+sse_encode_protocol_type(protocol, serializer);
+sse_encode_String(ip, serializer);
+sse_encode_u_16(port, serializer);
+sse_encode_String(path, serializer);
+sse_encode_String(body, serializer);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17, port: port_);
+
+            },
+            codec:
+        SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_rs_http_client_error,
+        )
+        ,
+            constMeta: kCrateApiHttpRsHttpClientPostJsonConstMeta,
+            argValues: [that, protocol, ip, port, path, body],
+            apiImpl: this,
+        )); }
+
+
+        TaskConstMeta get kCrateApiHttpRsHttpClientPostJsonConstMeta => const TaskConstMeta(
+            debugName: "RsHttpClient_post_json",
+            argNames: ["that", "protocol", "ip", "port", "path", "body"],
+        );
+
 
 @override Future<PrepareUploadResult> crateApiHttpRsHttpClientPrepareUpload({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required PrepareUploadRequestDto payload , String? publicKey , String? pin , required RsCancellationToken cancelToken })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpClient(that, serializer);
 sse_encode_protocol_type(protocol, serializer);
 sse_encode_String(ip, serializer);
@@ -732,10 +768,10 @@ sse_encode_box_autoadd_prepare_upload_request_dto(payload, serializer);
 sse_encode_opt_String(publicKey, serializer);
 sse_encode_opt_String(pin, serializer);
 sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsCancellationToken(cancelToken, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_prepare_upload_result,
           decodeErrorData: sse_decode_rs_http_client_error,
@@ -751,20 +787,20 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             debugName: "RsHttpClient_prepare_upload",
             argNames: ["that", "protocol", "ip", "port", "payload", "publicKey", "pin", "cancelToken"],
         );
-        
+
 
 @override Future<ResultWithPublicKeyRegisterResponseDto> crateApiHttpRsHttpClientRegister({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , required RegisterDto payload })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpClient(that, serializer);
 sse_encode_protocol_type(protocol, serializer);
 sse_encode_String(ip, serializer);
 sse_encode_u_16(port, serializer);
 sse_encode_box_autoadd_register_dto(payload, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_result_with_public_key_register_response_dto,
           decodeErrorData: sse_decode_rs_http_client_error,
@@ -780,13 +816,13 @@ sse_encode_box_autoadd_register_dto(payload, serializer);
             debugName: "RsHttpClient_register",
             argNames: ["that", "protocol", "ip", "port", "payload"],
         );
-        
 
-@override Stream<RsUploadEvent> crateApiHttpRsHttpClientUpload({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , String? publicKey , required String sessionId , required String fileId , required String token , Dart2RustStreamReceiver? binary , String? path , int? fileDescriptor , required BigInt contentLength , required RsCancellationToken cancelToken })  { 
+
+@override Stream<RsUploadEvent> crateApiHttpRsHttpClientUpload({required RsHttpClient that , required ProtocolType protocol , required String ip , required int port , String? publicKey , required String sessionId , required String fileId , required String token , Dart2RustStreamReceiver? binary , String? path , int? fileDescriptor , required BigInt contentLength , required RsCancellationToken cancelToken })  {
             final sink = RustStreamSink<RsUploadEvent>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpClient(that, serializer);
 sse_encode_StreamSink_rs_upload_event_Sse(sink, serializer);
 sse_encode_protocol_type(protocol, serializer);
@@ -801,10 +837,10 @@ sse_encode_opt_String(path, serializer);
 sse_encode_opt_box_autoadd_i_32(fileDescriptor, serializer);
 sse_encode_u_64(contentLength, serializer);
 sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsCancellationToken(cancelToken, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -822,17 +858,17 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             debugName: "RsHttpClient_upload",
             argNames: ["that", "sink", "protocol", "ip", "port", "publicKey", "sessionId", "fileId", "token", "binary", "path", "fileDescriptor", "contentLength", "cancelToken"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerCancelSession({required RsHttpServer that , required String sessionId })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -848,18 +884,18 @@ sse_encode_String(sessionId, serializer);
             debugName: "RsHttpServer_cancel_session",
             argNames: ["that", "sessionId"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerFailFileDownload({required RsHttpServer that , required String sessionId , required String fileId })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_String(fileId, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -875,18 +911,18 @@ sse_encode_String(fileId, serializer);
             debugName: "RsHttpServer_fail_file_download",
             argNames: ["that", "sessionId", "fileId"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerFailFileUpload({required RsHttpServer that , required String sessionId , required String fileId })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_String(fileId, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -902,19 +938,19 @@ sse_encode_String(fileId, serializer);
             debugName: "RsHttpServer_fail_file_upload",
             argNames: ["that", "sessionId", "fileId"],
         );
-        
 
-@override Stream<RsServerEvent> crateApiServerRsHttpServerListen({required RsHttpServer that })  { 
+
+@override Stream<RsServerEvent> crateApiServerRsHttpServerListen({required RsHttpServer that })  {
             final sink = RustStreamSink<RsServerEvent>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_StreamSink_rs_server_event_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -932,20 +968,20 @@ sse_encode_StreamSink_rs_server_event_Sse(sink, serializer);
             debugName: "RsHttpServer_listen",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerRespondFileDownload({required RsHttpServer that , required String sessionId , required String fileId , String? path , int? fileDescriptor })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_String(fileId, serializer);
 sse_encode_opt_String(path, serializer);
 sse_encode_opt_box_autoadd_i_32(fileDescriptor, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -961,13 +997,13 @@ sse_encode_opt_box_autoadd_i_32(fileDescriptor, serializer);
             debugName: "RsHttpServer_respond_file_download",
             argNames: ["that", "sessionId", "fileId", "path", "fileDescriptor"],
         );
-        
 
-@override Stream<double> crateApiServerRsHttpServerRespondFileUpload({required RsHttpServer that , required String sessionId , required String fileId , String? path , int? fileDescriptor , required BigInt fileSize })  { 
+
+@override Stream<double> crateApiServerRsHttpServerRespondFileUpload({required RsHttpServer that , required String sessionId , required String fileId , String? path , int? fileDescriptor , required BigInt fileSize })  {
             final sink = RustStreamSink<double>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_StreamSink_f_64_Sse(sink, serializer);
 sse_encode_String(sessionId, serializer);
@@ -975,10 +1011,10 @@ sse_encode_String(fileId, serializer);
 sse_encode_opt_String(path, serializer);
 sse_encode_opt_box_autoadd_i_32(fileDescriptor, serializer);
 sse_encode_u_64(fileSize, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -996,18 +1032,45 @@ sse_encode_u_64(fileSize, serializer);
             debugName: "RsHttpServer_respond_file_upload",
             argNames: ["that", "sink", "sessionId", "fileId", "path", "fileDescriptor", "fileSize"],
         );
-        
+
+
+@override Future<void> crateApiServerRsHttpServerRespondHomeHubInvite({required RsHttpServer that , required String inviteId , required bool accept })  { return handler.executeNormal(NormalTask(
+            callFfi: (port_) {
+
+            final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
+sse_encode_String(inviteId, serializer);
+sse_encode_bool(accept, serializer);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27, port: port_);
+
+            },
+            codec:
+        SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        )
+        ,
+            constMeta: kCrateApiServerRsHttpServerRespondHomeHubInviteConstMeta,
+            argValues: [that, inviteId, accept],
+            apiImpl: this,
+        )); }
+
+
+        TaskConstMeta get kCrateApiServerRsHttpServerRespondHomeHubInviteConstMeta => const TaskConstMeta(
+            debugName: "RsHttpServer_respond_home_hub_invite",
+            argNames: ["that", "inviteId", "accept"],
+        );
+
 
 @override Future<void> crateApiServerRsHttpServerRespondPrepareDownload({required RsHttpServer that , required String sessionId , required bool accept })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_bool(accept, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1023,17 +1086,17 @@ sse_encode_bool(accept, serializer);
             debugName: "RsHttpServer_respond_prepare_download",
             argNames: ["that", "sessionId", "accept"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerRespondPrepareUpload({required RsHttpServer that , List<String>? acceptedFileIds })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_opt_list_String(acceptedFileIds, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1049,18 +1112,18 @@ sse_encode_opt_list_String(acceptedFileIds, serializer);
             debugName: "RsHttpServer_respond_prepare_upload",
             argNames: ["that", "acceptedFileIds"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerRespondStreamFile({required RsHttpServer that , required String requestId , required bool accept })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(requestId, serializer);
 sse_encode_bool(accept, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1076,18 +1139,18 @@ sse_encode_bool(accept, serializer);
             debugName: "RsHttpServer_respond_stream_file",
             argNames: ["that", "requestId", "accept"],
         );
-        
+
 
 @override Future<void> crateApiServerRsHttpServerRespondStreamSession({required RsHttpServer that , required String sessionId , required bool accept })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_bool(accept, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1103,16 +1166,42 @@ sse_encode_bool(accept, serializer);
             debugName: "RsHttpServer_respond_stream_session",
             argNames: ["that", "sessionId", "accept"],
         );
-        
+
+
+@override Future<void> crateApiServerRsHttpServerSetHomeHubGroupIds({required RsHttpServer that , required List<String> groupIds })  { return handler.executeNormal(NormalTask(
+            callFfi: (port_) {
+
+            final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
+sse_encode_list_String(groupIds, serializer);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32, port: port_);
+
+            },
+            codec:
+        SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        )
+        ,
+            constMeta: kCrateApiServerRsHttpServerSetHomeHubGroupIdsConstMeta,
+            argValues: [that, groupIds],
+            apiImpl: this,
+        )); }
+
+
+        TaskConstMeta get kCrateApiServerRsHttpServerSetHomeHubGroupIdsConstMeta => const TaskConstMeta(
+            debugName: "RsHttpServer_set_home_hub_group_ids",
+            argNames: ["that", "groupIds"],
+        );
+
 
 @override Future<void> crateApiServerRsHttpServerStop({required RsHttpServer that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1128,16 +1217,16 @@ sse_encode_bool(accept, serializer);
             debugName: "RsHttpServer_stop",
             argNames: ["that"],
         );
-        
+
 
 @override Future<String> crateApiWebrtcRtcFileReceiverGetFileId({required RtcFileReceiver that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileReceiver(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_String,
           decodeErrorData: null,
@@ -1153,19 +1242,19 @@ sse_encode_bool(accept, serializer);
             debugName: "RtcFileReceiver_get_file_id",
             argNames: ["that"],
         );
-        
 
-@override Stream<Uint8List> crateApiWebrtcRtcFileReceiverReceive({required RtcFileReceiver that })  { 
+
+@override Stream<Uint8List> crateApiWebrtcRtcFileReceiverReceive({required RtcFileReceiver that })  {
             final sink = RustStreamSink<Uint8List>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileReceiver(that, serializer);
 sse_encode_StreamSink_list_prim_u_8_strict_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1183,17 +1272,17 @@ sse_encode_StreamSink_list_prim_u_8_strict_Sse(sink, serializer);
             debugName: "RtcFileReceiver_receive",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcRtcFileSenderSend({required RtcFileSender that , required List<int> data })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileSender(that, serializer);
 sse_encode_list_prim_u_8_loose(data, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1209,16 +1298,16 @@ sse_encode_list_prim_u_8_loose(data, serializer);
             debugName: "RtcFileSender_send",
             argNames: ["that", "data"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcRtcReceiveControllerDecline({required RtcReceiveController that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1234,19 +1323,19 @@ sse_encode_list_prim_u_8_loose(data, serializer);
             debugName: "RtcReceiveController_decline",
             argNames: ["that"],
         );
-        
 
-@override Stream<RTCFileError> crateApiWebrtcRtcReceiveControllerListenError({required RtcReceiveController that })  { 
+
+@override Stream<RTCFileError> crateApiWebrtcRtcReceiveControllerListenError({required RtcReceiveController that })  {
             final sink = RustStreamSink<RTCFileError>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1264,16 +1353,16 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
             debugName: "RtcReceiveController_listen_error",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<List<FileDto>> crateApiWebrtcRtcReceiveControllerListenFiles({required RtcReceiveController that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_list_file_dto,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1289,19 +1378,19 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
             debugName: "RtcReceiveController_listen_files",
             argNames: ["that"],
         );
-        
 
-@override Stream<RtcFileReceiver> crateApiWebrtcRtcReceiveControllerListenReceiving({required RtcReceiveController that })  { 
+
+@override Stream<RtcFileReceiver> crateApiWebrtcRtcReceiveControllerListenReceiving({required RtcReceiveController that })  {
             final sink = RustStreamSink<RtcFileReceiver>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_StreamSink_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileReceiver_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1319,19 +1408,19 @@ sse_encode_StreamSink_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRust
             debugName: "RtcReceiveController_listen_receiving",
             argNames: ["that", "sink"],
         );
-        
 
-@override Stream<RTCStatus> crateApiWebrtcRtcReceiveControllerListenStatus({required RtcReceiveController that })  { 
+
+@override Stream<RTCStatus> crateApiWebrtcRtcReceiveControllerListenStatus({required RtcReceiveController that })  {
             final sink = RustStreamSink<RTCStatus>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1349,17 +1438,17 @@ sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
             debugName: "RtcReceiveController_listen_status",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcRtcReceiveControllerSendFileStatus({required RtcReceiveController that , required RTCSendFileResponse status })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_box_autoadd_rtc_send_file_response(status, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1375,17 +1464,17 @@ sse_encode_box_autoadd_rtc_send_file_response(status, serializer);
             debugName: "RtcReceiveController_send_file_status",
             argNames: ["that", "status"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcRtcReceiveControllerSendPin({required RtcReceiveController that , required String pin })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_String(pin, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1401,17 +1490,17 @@ sse_encode_String(pin, serializer);
             debugName: "RtcReceiveController_send_pin",
             argNames: ["that", "pin"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcRtcReceiveControllerSendSelection({required RtcReceiveController that , required Set<String> selection })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_Set_String_None(selection, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1427,19 +1516,19 @@ sse_encode_Set_String_None(selection, serializer);
             debugName: "RtcReceiveController_send_selection",
             argNames: ["that", "selection"],
         );
-        
 
-@override Stream<RTCFileError> crateApiWebrtcRtcSendControllerListenError({required RtcSendController that })  { 
+
+@override Stream<RTCFileError> crateApiWebrtcRtcSendControllerListenError({required RtcSendController that })  {
             final sink = RustStreamSink<RTCFileError>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1457,16 +1546,16 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
             debugName: "RtcSendController_listen_error",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<Set<String>> crateApiWebrtcRtcSendControllerListenSelectedFiles({required RtcSendController that })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Set_String_None,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1482,19 +1571,19 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
             debugName: "RtcSendController_listen_selected_files",
             argNames: ["that"],
         );
-        
 
-@override Stream<RTCStatus> crateApiWebrtcRtcSendControllerListenStatus({required RtcSendController that })  { 
+
+@override Stream<RTCStatus> crateApiWebrtcRtcSendControllerListenStatus({required RtcSendController that })  {
             final sink = RustStreamSink<RTCStatus>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1512,17 +1601,17 @@ sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
             debugName: "RtcSendController_listen_status",
             argNames: ["that", "sink"],
         );
-        
+
 
 @override Future<RtcFileSender> crateApiWebrtcRtcSendControllerSendFile({required RtcSendController that , required String fileId })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_String(fileId, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 48, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileSender,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1538,17 +1627,17 @@ sse_encode_String(fileId, serializer);
             debugName: "RtcSendController_send_file",
             argNames: ["that", "fileId"],
         );
-        
+
 
 @override Future<void> crateApiWebrtcRtcSendControllerSendPin({required RtcSendController that , required String pin })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_String(pin, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 49, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1564,22 +1653,22 @@ sse_encode_String(pin, serializer);
             debugName: "RtcSendController_send_pin",
             argNames: ["that", "pin"],
         );
-        
 
-@override Stream<WsServerMessage> crateApiWebrtcConnect({required String uri , required ProposingClientInfo info , required String privateKey , required FutureOr<void> Function(LsSignalingConnection) onConnection })  { 
+
+@override Stream<WsServerMessage> crateApiWebrtcConnect({required String uri , required ProposingClientInfo info , required String privateKey , required FutureOr<void> Function(LsSignalingConnection) onConnection })  {
             final sink = RustStreamSink<WsServerMessage>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_StreamSink_ws_server_message_Sse(sink, serializer);
 sse_encode_String(uri, serializer);
 sse_encode_box_autoadd_proposing_client_info(info, serializer);
 sse_encode_String(privateKey, serializer);
 sse_encode_DartFn_Inputs_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLsSignalingConnection_Output_unit_AnyhowException(onConnection, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1597,16 +1686,16 @@ sse_encode_DartFn_Inputs_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedR
             debugName: "connect",
             argNames: ["sink", "uri", "info", "privateKey", "onConnection"],
         );
-        
+
 
 @override RsCancellationToken crateApiCancelCreateCancellationToken()  { return handler.executeSync(SyncTask(
             callFfi: () {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 48)!;
-            
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51)!;
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsCancellationToken,
           decodeErrorData: null,
@@ -1622,20 +1711,20 @@ sse_encode_DartFn_Inputs_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedR
             debugName: "create_cancellation_token",
             argNames: [],
         );
-        
+
 
 @override RsHttpClient crateApiHttpCreateClient({required String privateKey , required String cert , required LsHttpClientVersion version , String? expectedFingerprint , int? timeoutMs })  { return handler.executeSync(SyncTask(
             callFfi: () {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(privateKey, serializer);
 sse_encode_String(cert, serializer);
 sse_encode_ls_http_client_version(version, serializer);
 sse_encode_opt_String(expectedFingerprint, serializer);
 sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 49)!;
-            
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpClient,
           decodeErrorData: sse_decode_rs_http_client_error,
@@ -1651,16 +1740,16 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             debugName: "create_client",
             argNames: ["privateKey", "cert", "version", "expectedFingerprint", "timeoutMs"],
         );
-        
+
 
 @override Future<(Dart2RustStreamSink,Dart2RustStreamReceiver)> crateApiStreamCreateStream()  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_record_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_dart_2_rust_stream_sink_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_dart_2_rust_stream_receiver,
           decodeErrorData: null,
@@ -1676,16 +1765,16 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             debugName: "create_stream",
             argNames: [],
         );
-        
+
 
 @override Future<void> crateApiLoggingEnableDebugLogging()  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1701,16 +1790,16 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             debugName: "enable_debug_logging",
             argNames: [],
         );
-        
+
 
 @override Future<KeyPair> crateApiCryptoGenerateKeyPair()  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_key_pair,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1726,16 +1815,16 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             debugName: "generate_key_pair",
             argNames: [],
         );
-        
+
 
 @override Future<SecurityContext> crateApiCryptoGenerateSecurityContext()  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_security_context,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1751,22 +1840,22 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             debugName: "generate_security_context",
             argNames: [],
         );
-        
 
-@override Stream<RsHashFileEvent> crateApiCryptoHashFile({String? path , int? fileDescriptor , Uint8List? bytes , required RsCancellationToken cancelToken })  { 
+
+@override Stream<RsHashFileEvent> crateApiCryptoHashFile({String? path , int? fileDescriptor , Uint8List? bytes , required RsCancellationToken cancelToken })  {
             final sink = RustStreamSink<RsHashFileEvent>();
             unawaited(handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_StreamSink_rs_hash_file_event_Sse(sink, serializer);
 sse_encode_opt_String(path, serializer);
 sse_encode_opt_box_autoadd_i_32(fileDescriptor, serializer);
 sse_encode_opt_list_prim_u_8_strict(bytes, serializer);
 sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsCancellationToken(cancelToken, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 57, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
@@ -1784,16 +1873,16 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             debugName: "hash_file",
             argNames: ["sink", "path", "fileDescriptor", "bytes", "cancelToken"],
         );
-        
+
 
 @override bool crateApiFilenameIsValidFileName({required String name })  { return handler.executeSync(SyncTask(
             callFfi: () {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(name, serializer);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55)!;
-            
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 58)!;
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_bool,
           decodeErrorData: null,
@@ -1809,16 +1898,16 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             debugName: "is_valid_file_name",
             argNames: ["name"],
         );
-        
+
 
 @override Future<FileMetadata?> crateApiMetadataReadFileMetadata({required String path })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(path, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 59, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_file_metadata,
           decodeErrorData: null,
@@ -1834,16 +1923,16 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             debugName: "read_file_metadata",
             argNames: ["path"],
         );
-        
+
 
 @override String crateApiFilenameSanitizeFileName({required String name })  { return handler.executeSync(SyncTask(
             callFfi: () {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(name, serializer);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 57)!;
-            
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 60)!;
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_String,
           decodeErrorData: null,
@@ -1859,11 +1948,11 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             debugName: "sanitize_file_name",
             argNames: ["name"],
         );
-        
+
 
 @override Future<RsDiscovery> crateApiDiscoveryStartDiscovery({required String group , required int port , List<String>? networkWhitelist , List<String>? networkBlacklist , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , required ProtocolType protocol , required bool download , required String certPem , required String privateKeyPem , required BigInt timeoutMs })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(group, serializer);
 sse_encode_u_16(port, serializer);
 sse_encode_opt_list_String(networkWhitelist, serializer);
@@ -1878,10 +1967,10 @@ sse_encode_bool(download, serializer);
 sse_encode_String(certPem, serializer);
 sse_encode_String(privateKeyPem, serializer);
 sse_encode_u_64(timeoutMs, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 58, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 61, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsDiscovery,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1897,11 +1986,11 @@ sse_encode_u_64(timeoutMs, serializer);
             debugName: "start_discovery",
             argNames: ["group", "port", "networkWhitelist", "networkBlacklist", "alias", "version", "deviceModel", "deviceType", "fingerprint", "protocol", "download", "certPem", "privateKeyPem", "timeoutMs"],
         );
-        
 
-@override Future<RsHttpServer> crateApiServerStartServer({required int port , TlsConfig? tls , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , String? pin , required bool verifyChecksums , WebParams? web , String? showToken })  { return handler.executeNormal(NormalTask(
+
+@override Future<RsHttpServer> crateApiServerStartServer({required int port , TlsConfig? tls , required String alias , required String version , String? deviceModel , DeviceType? deviceType , required String fingerprint , String? pin , required bool verifyChecksums , WebParams? web , String? showToken , List<String>? homeHubGroupIds })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_u_16(port, serializer);
 sse_encode_opt_box_autoadd_tls_config(tls, serializer);
 sse_encode_String(alias, serializer);
@@ -1913,36 +2002,37 @@ sse_encode_opt_String(pin, serializer);
 sse_encode_bool(verifyChecksums, serializer);
 sse_encode_opt_box_autoadd_web_params(web, serializer);
 sse_encode_opt_String(showToken, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 59, port: port_);
-            
+sse_encode_opt_list_String(homeHubGroupIds, serializer);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 62, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer,
           decodeErrorData: sse_decode_AnyhowException,
         )
         ,
             constMeta: kCrateApiServerStartServerConstMeta,
-            argValues: [port, tls, alias, version, deviceModel, deviceType, fingerprint, pin, verifyChecksums, web, showToken],
+            argValues: [port, tls, alias, version, deviceModel, deviceType, fingerprint, pin, verifyChecksums, web, showToken, homeHubGroupIds],
             apiImpl: this,
         )); }
 
 
         TaskConstMeta get kCrateApiServerStartServerConstMeta => const TaskConstMeta(
             debugName: "start_server",
-            argNames: ["port", "tls", "alias", "version", "deviceModel", "deviceType", "fingerprint", "pin", "verifyChecksums", "web", "showToken"],
+            argNames: ["port", "tls", "alias", "version", "deviceModel", "deviceType", "fingerprint", "pin", "verifyChecksums", "web", "showToken", "homeHubGroupIds"],
         );
-        
+
 
 @override Future<void> crateApiCryptoVerifyCert({required String cert , required String publicKey })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
-              
+
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(cert, serializer);
 sse_encode_String(publicKey, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 60, port: port_);
-            
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 63, port: port_);
+
             },
-            codec: 
+            codec:
         SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: sse_decode_AnyhowException,
@@ -1958,7 +2048,7 @@ sse_encode_String(publicKey, serializer);
             debugName: "verify_cert",
             argNames: ["cert", "publicKey"],
         );
-        
+
 
 
             Future<void> Function(int, dynamic)
@@ -2357,6 +2447,9 @@ return (raw as List<dynamic>).map(dco_decode_rs_device_channel).toList(); }
 @protected List<RsDeviceLog> dco_decode_list_rs_device_log(dynamic raw){ // Codec=Dco (DartCObject based), see doc to use other codecs
 return (raw as List<dynamic>).map(dco_decode_rs_device_log).toList(); }
 
+@protected List<RsHomeHubTransferFile> dco_decode_list_rs_home_hub_transfer_file(dynamic raw){ // Codec=Dco (DartCObject based), see doc to use other codecs
+return (raw as List<dynamic>).map(dco_decode_rs_home_hub_transfer_file).toList(); }
+
 @protected List<StreamRootParams> dco_decode_list_stream_root_params(dynamic raw){ // Codec=Dco (DartCObject based), see doc to use other codecs
 return (raw as List<dynamic>).map(dco_decode_stream_root_params).toList(); }
 
@@ -2541,6 +2634,13 @@ case 1: return RsHashFileEvent_Done(hash: dco_decode_String(raw[1]),);
                 default: throw Exception("unreachable");
             } }
 
+@protected RsHomeHubTransferFile dco_decode_rs_home_hub_transfer_file(dynamic raw){ // Codec=Dco (DartCObject based), see doc to use other codecs
+final arr = raw as List<dynamic>;
+                if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+                return RsHomeHubTransferFile(fileId: dco_decode_String(arr[0]),
+name: dco_decode_String(arr[1]),
+size: dco_decode_u_64(arr[2]),); }
+
 @protected RsHttpClientError dco_decode_rs_http_client_error(dynamic raw){ // Codec=Dco (DartCObject based), see doc to use other codecs
 switch (raw[0]) {
                 case 0: return RsHttpClientError_StatusCode(status: dco_decode_u_16(raw[1]),message: dco_decode_opt_String(raw[2]),);
@@ -2564,7 +2664,10 @@ case 7: return RsServerEvent_WebFileDownload(sessionId: dco_decode_String(raw[1]
 case 8: return RsServerEvent_StreamPrepareSession(ip: dco_decode_String(raw[1]),sessionId: dco_decode_String(raw[2]),userAgent: dco_decode_opt_String(raw[3]),);
 case 9: return RsServerEvent_StreamFileRequest(ip: dco_decode_String(raw[1]),sessionId: dco_decode_String(raw[2]),requestId: dco_decode_String(raw[3]),entry: dco_decode_box_autoadd_rs_stream_entry(raw[4]),purpose: dco_decode_String(raw[5]),);
 case 10: return RsServerEvent_Show(args: dco_decode_list_String(raw[1]),);
-case 11: return RsServerEvent_ListenerFailed(error: dco_decode_String(raw[1]),);
+case 11: return RsServerEvent_HomeHubInviteRequest(ip: dco_decode_String(raw[1]),inviteId: dco_decode_String(raw[2]),groupId: dco_decode_String(raw[3]),groupName: dco_decode_String(raw[4]),senderDeviceId: dco_decode_String(raw[5]),senderAlias: dco_decode_String(raw[6]),role: dco_decode_String(raw[7]),createdAt: dco_decode_String(raw[8]),expiresAt: dco_decode_opt_String(raw[9]),);
+case 12: return RsServerEvent_HomeHubChatMessage(eventId: dco_decode_String(raw[1]),groupId: dco_decode_String(raw[2]),senderDeviceId: dco_decode_String(raw[3]),senderAlias: dco_decode_String(raw[4]),text: dco_decode_String(raw[5]),createdAt: dco_decode_String(raw[6]),);
+case 13: return RsServerEvent_HomeHubTransferOffer(ip: dco_decode_String(raw[1]),offerId: dco_decode_String(raw[2]),groupId: dco_decode_String(raw[3]),senderDeviceId: dco_decode_String(raw[4]),senderAlias: dco_decode_String(raw[5]),files: dco_decode_list_rs_home_hub_transfer_file(raw[6]),);
+case 14: return RsServerEvent_ListenerFailed(error: dco_decode_String(raw[1]),);
                 default: throw Exception("unreachable");
             } }
 
@@ -3085,6 +3188,14 @@ var len_ = sse_decode_i_32(deserializer);
         return ans_;
          }
 
+@protected List<RsHomeHubTransferFile> sse_decode_list_rs_home_hub_transfer_file(SseDeserializer deserializer){ // Codec=Sse (Serialization based), see doc to use other codecs
+
+        var len_ = sse_decode_i_32(deserializer);
+        var ans_ = <RsHomeHubTransferFile>[];
+        for (var idx_ = 0; idx_ < len_; ++idx_) { ans_.add(sse_decode_rs_home_hub_transfer_file(deserializer)); }
+        return ans_;
+         }
+
 @protected List<StreamRootParams> sse_decode_list_stream_root_params(SseDeserializer deserializer){ // Codec=Sse (Serialization based), see doc to use other codecs
 
         var len_ = sse_decode_i_32(deserializer);
@@ -3355,6 +3466,12 @@ return RsHashFileEvent_Progress(bytes: var_bytes);case 1: var var_hash = sse_dec
 return RsHashFileEvent_Done(hash: var_hash); default: throw UnimplementedError(''); }
              }
 
+@protected RsHomeHubTransferFile sse_decode_rs_home_hub_transfer_file(SseDeserializer deserializer){ // Codec=Sse (Serialization based), see doc to use other codecs
+var var_fileId = sse_decode_String(deserializer);
+var var_name = sse_decode_String(deserializer);
+var var_size = sse_decode_u_64(deserializer);
+return RsHomeHubTransferFile(fileId: var_fileId, name: var_name, size: var_size); }
+
 @protected RsHttpClientError sse_decode_rs_http_client_error(SseDeserializer deserializer){ // Codec=Sse (Serialization based), see doc to use other codecs
 
             var tag_ = sse_decode_i_32(deserializer);
@@ -3400,7 +3517,28 @@ var var_requestId = sse_decode_String(deserializer);
 var var_entry = sse_decode_box_autoadd_rs_stream_entry(deserializer);
 var var_purpose = sse_decode_String(deserializer);
 return RsServerEvent_StreamFileRequest(ip: var_ip, sessionId: var_sessionId, requestId: var_requestId, entry: var_entry, purpose: var_purpose);case 10: var var_args = sse_decode_list_String(deserializer);
-return RsServerEvent_Show(args: var_args);case 11: var var_error = sse_decode_String(deserializer);
+return RsServerEvent_Show(args: var_args);case 11: var var_ip = sse_decode_String(deserializer);
+var var_inviteId = sse_decode_String(deserializer);
+var var_groupId = sse_decode_String(deserializer);
+var var_groupName = sse_decode_String(deserializer);
+var var_senderDeviceId = sse_decode_String(deserializer);
+var var_senderAlias = sse_decode_String(deserializer);
+var var_role = sse_decode_String(deserializer);
+var var_createdAt = sse_decode_String(deserializer);
+var var_expiresAt = sse_decode_opt_String(deserializer);
+return RsServerEvent_HomeHubInviteRequest(ip: var_ip, inviteId: var_inviteId, groupId: var_groupId, groupName: var_groupName, senderDeviceId: var_senderDeviceId, senderAlias: var_senderAlias, role: var_role, createdAt: var_createdAt, expiresAt: var_expiresAt);case 12: var var_eventId = sse_decode_String(deserializer);
+var var_groupId = sse_decode_String(deserializer);
+var var_senderDeviceId = sse_decode_String(deserializer);
+var var_senderAlias = sse_decode_String(deserializer);
+var var_text = sse_decode_String(deserializer);
+var var_createdAt = sse_decode_String(deserializer);
+return RsServerEvent_HomeHubChatMessage(eventId: var_eventId, groupId: var_groupId, senderDeviceId: var_senderDeviceId, senderAlias: var_senderAlias, text: var_text, createdAt: var_createdAt);case 13: var var_ip = sse_decode_String(deserializer);
+var var_offerId = sse_decode_String(deserializer);
+var var_groupId = sse_decode_String(deserializer);
+var var_senderDeviceId = sse_decode_String(deserializer);
+var var_senderAlias = sse_decode_String(deserializer);
+var var_files = sse_decode_list_rs_home_hub_transfer_file(deserializer);
+return RsServerEvent_HomeHubTransferOffer(ip: var_ip, offerId: var_offerId, groupId: var_groupId, senderDeviceId: var_senderDeviceId, senderAlias: var_senderAlias, files: var_files);case 14: var var_error = sse_decode_String(deserializer);
 return RsServerEvent_ListenerFailed(error: var_error); default: throw UnimplementedError(''); }
              }
 
@@ -3902,6 +4040,10 @@ sse_encode_i_32(self.length, serializer);
 sse_encode_i_32(self.length, serializer);
         for (final item in self) { sse_encode_rs_device_log(item, serializer); } }
 
+@protected void sse_encode_list_rs_home_hub_transfer_file(List<RsHomeHubTransferFile> self, SseSerializer serializer){ // Codec=Sse (Serialization based), see doc to use other codecs
+sse_encode_i_32(self.length, serializer);
+        for (final item in self) { sse_encode_rs_home_hub_transfer_file(item, serializer); } }
+
 @protected void sse_encode_list_stream_root_params(List<StreamRootParams> self, SseSerializer serializer){ // Codec=Sse (Serialization based), see doc to use other codecs
 sse_encode_i_32(self.length, serializer);
         for (final item in self) { sse_encode_stream_root_params(item, serializer); } }
@@ -4147,6 +4289,12 @@ switch (self) { case RsHashFileEvent_Progress(bytes: final bytes): sse_encode_i_
 case RsHashFileEvent_Done(hash: final hash): sse_encode_i_32(1, serializer); sse_encode_String(hash, serializer);
   } }
 
+@protected void sse_encode_rs_home_hub_transfer_file(RsHomeHubTransferFile self, SseSerializer serializer){ // Codec=Sse (Serialization based), see doc to use other codecs
+sse_encode_String(self.fileId, serializer);
+sse_encode_String(self.name, serializer);
+sse_encode_u_64(self.size, serializer);
+ }
+
 @protected void sse_encode_rs_http_client_error(RsHttpClientError self, SseSerializer serializer){ // Codec=Sse (Serialization based), see doc to use other codecs
 switch (self) { case RsHttpClientError_StatusCode(status: final status,message: final message): sse_encode_i_32(0, serializer); sse_encode_u_16(status, serializer);
 sse_encode_opt_String(message, serializer);
@@ -4187,7 +4335,28 @@ sse_encode_String(requestId, serializer);
 sse_encode_box_autoadd_rs_stream_entry(entry, serializer);
 sse_encode_String(purpose, serializer);
 case RsServerEvent_Show(args: final args): sse_encode_i_32(10, serializer); sse_encode_list_String(args, serializer);
-case RsServerEvent_ListenerFailed(error: final error): sse_encode_i_32(11, serializer); sse_encode_String(error, serializer);
+case RsServerEvent_HomeHubInviteRequest(ip: final ip,inviteId: final inviteId,groupId: final groupId,groupName: final groupName,senderDeviceId: final senderDeviceId,senderAlias: final senderAlias,role: final role,createdAt: final createdAt,expiresAt: final expiresAt): sse_encode_i_32(11, serializer); sse_encode_String(ip, serializer);
+sse_encode_String(inviteId, serializer);
+sse_encode_String(groupId, serializer);
+sse_encode_String(groupName, serializer);
+sse_encode_String(senderDeviceId, serializer);
+sse_encode_String(senderAlias, serializer);
+sse_encode_String(role, serializer);
+sse_encode_String(createdAt, serializer);
+sse_encode_opt_String(expiresAt, serializer);
+case RsServerEvent_HomeHubChatMessage(eventId: final eventId,groupId: final groupId,senderDeviceId: final senderDeviceId,senderAlias: final senderAlias,text: final text,createdAt: final createdAt): sse_encode_i_32(12, serializer); sse_encode_String(eventId, serializer);
+sse_encode_String(groupId, serializer);
+sse_encode_String(senderDeviceId, serializer);
+sse_encode_String(senderAlias, serializer);
+sse_encode_String(text, serializer);
+sse_encode_String(createdAt, serializer);
+case RsServerEvent_HomeHubTransferOffer(ip: final ip,offerId: final offerId,groupId: final groupId,senderDeviceId: final senderDeviceId,senderAlias: final senderAlias,files: final files): sse_encode_i_32(13, serializer); sse_encode_String(ip, serializer);
+sse_encode_String(offerId, serializer);
+sse_encode_String(groupId, serializer);
+sse_encode_String(senderDeviceId, serializer);
+sse_encode_String(senderAlias, serializer);
+sse_encode_list_rs_home_hub_transfer_file(files, serializer);
+case RsServerEvent_ListenerFailed(error: final error): sse_encode_i_32(14, serializer); sse_encode_String(error, serializer);
   } }
 
 @protected void sse_encode_rs_stored_device(RsStoredDevice self, SseSerializer serializer){ // Codec=Sse (Serialization based), see doc to use other codecs
@@ -4324,7 +4493,7 @@ sse_encode_String(self.sessionId, serializer);
 sse_encode_String(self.sdp, serializer);
  }
                 }
-                
+
 
             @sealed class Dart2RustStreamReceiverImpl extends RustOpaque implements Dart2RustStreamReceiver {
                 // Not to be used by end users
@@ -4341,7 +4510,7 @@ sse_encode_String(self.sdp, serializer);
                     rustArcDecrementStrongCountPtr: RustLib.instance.api.rust_arc_decrement_strong_count_Dart2RustStreamReceiverPtr,
                 );
 
-                
+
             }
             @sealed class Dart2RustStreamSinkImpl extends RustOpaque implements Dart2RustStreamSink {
                 // Not to be used by end users
@@ -4523,6 +4692,10 @@ sse_encode_String(self.sdp, serializer);
                  Future<void>  cancel({required ProtocolType protocol , required String ip , required int port , required String sessionId })=>RustLib.instance.api.crateApiHttpRsHttpClientCancel(that: this, protocol: protocol, ip: ip, port: port, sessionId: sessionId);
 
 
+/// Sends a small authenticated JSON command to the local Home Hub API.
+ Future<String>  postJson({required ProtocolType protocol , required String ip , required int port , required String path , required String body })=>RustLib.instance.api.crateApiHttpRsHttpClientPostJson(that: this, protocol: protocol, ip: ip, port: port, path: path, body: body);
+
+
  Future<PrepareUploadResult>  prepareUpload({required ProtocolType protocol , required String ip , required int port , required PrepareUploadRequestDto payload , String? publicKey , String? pin , required RsCancellationToken cancelToken })=>RustLib.instance.api.crateApiHttpRsHttpClientPrepareUpload(that: this, protocol: protocol, ip: ip, port: port, payload: payload, publicKey: publicKey, pin: pin, cancelToken: cancelToken);
 
 
@@ -4613,6 +4786,10 @@ sse_encode_String(self.sdp, serializer);
  Stream<double>  respondFileUpload({required String sessionId , required String fileId , String? path , int? fileDescriptor , required BigInt fileSize })=>RustLib.instance.api.crateApiServerRsHttpServerRespondFileUpload(that: this, sessionId: sessionId, fileId: fileId, path: path, fileDescriptor: fileDescriptor, fileSize: fileSize);
 
 
+/// Answers a pending Home Hub invitation request.
+ Future<void>  respondHomeHubInvite({required String inviteId , required bool accept })=>RustLib.instance.api.crateApiServerRsHttpServerRespondHomeHubInvite(that: this, inviteId: inviteId, accept: accept);
+
+
 /// Answers the pending [RsServerEvent::WebPrepareDownload] event.
 ///
 /// Passing `true` accepts the download request, `false` declines it.
@@ -4632,6 +4809,10 @@ sse_encode_String(self.sdp, serializer);
 
 /// Answers a pending stream session request.
  Future<void>  respondStreamSession({required String sessionId , required bool accept })=>RustLib.instance.api.crateApiServerRsHttpServerRespondStreamSession(that: this, sessionId: sessionId, accept: accept);
+
+
+/// Updates the server-side allow-list used by Home Hub group events.
+ Future<void>  setHomeHubGroupIds({required List<String> groupIds })=>RustLib.instance.api.crateApiServerRsHttpServerSetHomeHubGroupIds(that: this, groupIds: groupIds);
 
 
 /// Stops the server.

@@ -313,11 +313,15 @@ class IsolateHttpServerStartAction extends ReduxActionWithResult<IsolateControll
   /// application instance request this one to show itself. `null` disables it.
   final String? showToken;
 
+  /// Group IDs that the Rust Home Hub server may accept events for.
+  final List<String> homeHubGroupIds;
+
   IsolateHttpServerStartAction({
     required this.pin,
     required this.verifyChecksums,
     required this.web,
     required this.showToken,
+    required this.homeHubGroupIds,
   });
 
   @override
@@ -335,9 +339,55 @@ class IsolateHttpServerStartAction extends ReduxActionWithResult<IsolateControll
           verifyChecksums: verifyChecksums,
           web: web,
           showToken: showToken,
+          homeHubGroupIds: homeHubGroupIds,
         ),
       ),
     );
+  }
+}
+
+/// Replaces the Rust-side Home Hub group allow-list without restarting the server.
+class IsolateHttpServerSetHomeHubGroupIdsAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  final List<String> groupIds;
+
+  IsolateHttpServerSetHomeHubGroupIdsAction({required this.groupIds});
+
+  @override
+  ParentIsolateState reduce() {
+    final connection = state.httpServer;
+    if (connection == null) {
+      throw StateError('httpServer is not initialized');
+    }
+    connection.sendToIsolate(
+      SendToIsolateData(
+        syncState: null,
+        data: IsolateTask(data: HttpServerSetHomeHubGroupIdsTask(groupIds: groupIds)),
+      ),
+    );
+    return state;
+  }
+}
+
+/// Answers a pending Home Hub transfer offer for this device only.
+class IsolateHttpServerHomeHubTransferOfferDecisionAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  final String offerId;
+  final bool accept;
+
+  IsolateHttpServerHomeHubTransferOfferDecisionAction({required this.offerId, required this.accept});
+
+  @override
+  ParentIsolateState reduce() {
+    final connection = state.httpServer;
+    if (connection == null) throw StateError('httpServer is not initialized');
+    connection.sendToIsolate(
+      SendToIsolateData(
+        syncState: null,
+        data: IsolateTask(
+          data: HttpServerHomeHubTransferOfferDecisionTask(offerId: offerId, accept: accept),
+        ),
+      ),
+    );
+    return state;
   }
 }
 
@@ -482,6 +532,31 @@ class IsolateHttpServerStreamSessionDecisionAction extends ReduxAction<IsolateCo
         syncState: null,
         data: IsolateTask(
           data: HttpServerStreamSessionDecisionTask(sessionId: sessionId, accept: accept),
+        ),
+      ),
+    );
+    return state;
+  }
+}
+
+/// Answers a pending Home Hub invitation request.
+class IsolateHttpServerHomeHubInviteDecisionAction extends ReduxAction<IsolateController, ParentIsolateState> {
+  final String inviteId;
+  final bool accept;
+
+  IsolateHttpServerHomeHubInviteDecisionAction({required this.inviteId, required this.accept});
+
+  @override
+  ParentIsolateState reduce() {
+    final connection = state.httpServer;
+    if (connection == null) {
+      throw StateError('httpServer is not initialized');
+    }
+    connection.sendToIsolate(
+      SendToIsolateData(
+        syncState: null,
+        data: IsolateTask(
+          data: HttpServerHomeHubInviteDecisionTask(inviteId: inviteId, accept: accept),
         ),
       ),
     );
