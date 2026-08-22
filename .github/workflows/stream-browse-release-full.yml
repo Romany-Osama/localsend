@@ -23,6 +23,9 @@ jobs:
         with:
           components: rustfmt
 
+      - name: Install rustfmt for the repository toolchain
+        run: rustup component add rustfmt --toolchain "$(rustup show active-toolchain | awk '{print $1}')"
+
       - name: Check formatting of changed Rust files
         run: |
           rustfmt --edition 2021 --check packages/core/src/http/server/stream.rs
