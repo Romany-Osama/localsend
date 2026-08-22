@@ -121,6 +121,7 @@ pub(crate) struct StreamState {
 struct StreamSession {
     ip: super::PeerIp,
     accepted: bool,
+    expires_at: Instant,
 }
 
 struct StreamGrant {
@@ -158,6 +159,7 @@ pub(crate) async fn prepare_session(
             StreamSession {
                 ip: client_info.ip,
                 accepted: false,
+                expires_at: Instant::now() + GRANT_TTL,
             },
         );
     }
@@ -174,9 +176,16 @@ pub(crate) async fn prepare_session(
         .await
         .map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?;
 
-    let accepted = decision_rx
-        .await
-        .map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?;
+    let accepted = match tokio::time::timeout(GRANT_TTL, decision_rx).await {
+        Ok(result) => result.map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?,
+        Err(_) => {
+            stream.sessions.lock().await.remove(&session_id);
+            return Err(AppError::Message(
+                StatusCode::REQUEST_TIMEOUT,
+                "Stream session approval timed out".to_string(),
+            ));
+        }
+    };
     if !accepted {
         stream.sessions.lock().await.remove(&session_id);
         return Err(AppError::Message(
@@ -185,8 +194,28 @@ pub(crate) async fn prepare_session(
         ));
     }
 
-    if let Some(session) = stream.sessions.lock().await.get_mut(&session_id) {
-        session.accepted = true;
+    let session_accepted = {
+        let mut sessions = stream.sessions.lock().await;
+        let expired = sessions
+            .get(&session_id)
+            .map(|session| session.expires_at <= Instant::now())
+            .unwrap_or(true);
+        if expired {
+            sessions.remove(&session_id);
+            false
+        } else if let Some(session) = sessions.get_mut(&session_id) {
+            session.accepted = true;
+            session.expires_at = Instant::now() + GRANT_TTL;
+            true
+        } else {
+            false
+        }
+    };
+    if !session_accepted {
+        return Err(AppError::Message(
+            StatusCode::REQUEST_TIMEOUT,
+            "Stream session approval timed out".to_string(),
+        ));
     }
 
     Ok(JsonResponse {
@@ -244,8 +273,8 @@ pub(crate) async fn entries(
     let (root, directory) = resolve_path(&stream, &root_id, &relative, true)?;
 
     let mut output = Vec::new();
-    for item in std::fs::read_dir(&directory)
-        .map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?
+    for item in
+        std::fs::read_dir(&directory).map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?
     {
         let item = item.map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?;
         let file_type = item
@@ -299,7 +328,9 @@ pub(crate) async fn file_request(
     let (root, path) = resolve_path(&stream, &payload.root_id, &payload.path, false)?;
     let metadata = std::fs::metadata(&path).map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?;
     if !metadata.is_file() {
-        return Err(AppError::BadRequest("The selected entry is not a file".to_string()));
+        return Err(AppError::BadRequest(
+            "The selected entry is not a file".to_string(),
+        ));
     }
 
     let file_name = path
@@ -333,10 +364,16 @@ pub(crate) async fn file_request(
         .await
         .map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?;
 
-    if !decision_rx
-        .await
-        .map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?
-    {
+    let accepted = match tokio::time::timeout(GRANT_TTL, decision_rx).await {
+        Ok(result) => result.map_err(|_| AppError::Status(StatusCode::INTERNAL_SERVER_ERROR))?,
+        Err(_) => {
+            return Err(AppError::Message(
+                StatusCode::REQUEST_TIMEOUT,
+                "Stream file approval timed out".to_string(),
+            ));
+        }
+    };
+    if !accepted {
         return Err(AppError::Message(
             StatusCode::FORBIDDEN,
             "File request rejected".to_string(),
@@ -388,7 +425,11 @@ pub(crate) async fn stream_file(
             .lock()
             .await
             .get(&grant.session_id)
-            .is_some_and(|session| session.accepted && session.ip == client_info.ip);
+            .is_some_and(|session| {
+                session.accepted
+                    && session.ip == client_info.ip
+                    && session.expires_at > Instant::now()
+            });
         if !session_valid {
             grants.remove(&grant_id);
             return Err(AppError::Status(StatusCode::FORBIDDEN));
@@ -402,8 +443,13 @@ pub(crate) async fn stream_file(
         }
     };
 
-    let (start, end, partial) = parse_range(req.headers().get(http::header::RANGE), grant.file.size)?;
-    let content_length = end - start + 1;
+    let (start, end, partial) =
+        parse_range(req.headers().get(http::header::RANGE), grant.file.size)?;
+    let content_length = if grant.file.size == 0 {
+        0
+    } else {
+        end - start + 1
+    };
     let (tx, rx) = mpsc::channel::<Bytes>(8);
     let path = grant.path.clone();
     tokio::spawn(async move {
@@ -419,7 +465,11 @@ pub(crate) async fn stream_file(
                     break;
                 }
                 remaining -= read as u64;
-                if tx.send(Bytes::copy_from_slice(&buffer[..read])).await.is_err() {
+                if tx
+                    .send(Bytes::copy_from_slice(&buffer[..read]))
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }
@@ -447,8 +497,14 @@ pub(crate) async fn stream_file(
         http::HeaderValue::from_str(&grant.file.mime_type)
             .unwrap_or_else(|_| http::HeaderValue::from_static("application/octet-stream")),
     );
-    headers.insert(http::header::ACCEPT_RANGES, http::HeaderValue::from_static("bytes"));
-    headers.insert(http::header::CONTENT_LENGTH, http::HeaderValue::from(content_length));
+    headers.insert(
+        http::header::ACCEPT_RANGES,
+        http::HeaderValue::from_static("bytes"),
+    );
+    headers.insert(
+        http::header::CONTENT_LENGTH,
+        http::HeaderValue::from(content_length),
+    );
     if partial {
         let value = format!("bytes {start}-{end}/{}", grant.file.size);
         headers.insert(
@@ -474,11 +530,16 @@ pub(crate) async fn revoke_session(
         .lock()
         .await
         .retain(|_, grant| grant.session_id != session_id);
-    Ok(Response::new(crate::http::server::common::response::empty_body()))
+    Ok(Response::new(
+        crate::http::server::common::response::empty_body(),
+    ))
 }
 
 fn require_stream(state: &AppState) -> Result<Arc<StreamState>, AppError> {
-    state.stream.clone().ok_or(AppError::Status(StatusCode::NOT_FOUND))
+    state
+        .stream
+        .clone()
+        .ok_or(AppError::Status(StatusCode::NOT_FOUND))
 }
 
 async fn validate_session(
@@ -486,13 +547,14 @@ async fn validate_session(
     session_id: &str,
     client_info: &RequestClientInfo,
 ) -> Result<(), AppError> {
-    let sessions = state.sessions.lock().await;
-    if sessions
-        .get(session_id)
-        .is_some_and(|session| session.accepted && session.ip == client_info.ip)
-    {
+    let mut sessions = state.sessions.lock().await;
+    let valid = sessions.get(session_id).is_some_and(|session| {
+        session.accepted && session.ip == client_info.ip && session.expires_at > Instant::now()
+    });
+    if valid {
         Ok(())
     } else {
+        sessions.remove(session_id);
         Err(AppError::Status(StatusCode::FORBIDDEN))
     }
 }
@@ -516,17 +578,19 @@ fn resolve_path<'a>(
         .find(|root| root.id == root_id)
         .ok_or(AppError::Status(StatusCode::NOT_FOUND))?;
     let relative_path = normalize_relative(relative)?;
-    let canonical_root = std::fs::canonicalize(&root.path)
-        .map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?;
+    let canonical_root =
+        std::fs::canonicalize(&root.path).map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?;
     let candidate = std::fs::canonicalize(root.path.join(relative_path))
         .map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?;
     if !candidate.starts_with(&canonical_root) {
         return Err(AppError::Status(StatusCode::FORBIDDEN));
     }
-    let metadata = std::fs::metadata(&candidate)
-        .map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?;
+    let metadata =
+        std::fs::metadata(&candidate).map_err(|_| AppError::Status(StatusCode::NOT_FOUND))?;
     if directory_required && !metadata.is_dir() {
-        return Err(AppError::BadRequest("The selected entry is not a directory".to_string()));
+        return Err(AppError::BadRequest(
+            "The selected entry is not a directory".to_string(),
+        ));
     }
     Ok((root, candidate))
 }
@@ -554,7 +618,11 @@ fn join_relative(parent: &str, name: &str) -> String {
 }
 
 fn mime_for_name(name: &str) -> String {
-    match name.rsplit_once('.').map(|(_, extension)| extension.to_ascii_lowercase()).as_deref() {
+    match name
+        .rsplit_once('.')
+        .map(|(_, extension)| extension.to_ascii_lowercase())
+        .as_deref()
+    {
         Some("mp4") => "video/mp4",
         Some("mkv") => "video/x-matroska",
         Some("webm") => "video/webm",
@@ -575,7 +643,11 @@ fn mime_for_name(name: &str) -> String {
 }
 
 fn is_streamable_mime(mime: &str) -> bool {
-    mime.starts_with("video/") || mime.starts_with("audio/") || mime.starts_with("image/") || mime == "application/pdf" || mime == "text/plain"
+    mime.starts_with("video/")
+        || mime.starts_with("audio/")
+        || mime.starts_with("image/")
+        || mime == "application/pdf"
+        || mime == "text/plain"
 }
 
 fn parse_range(
@@ -595,7 +667,9 @@ fn parse_range(
         return Err(AppError::BadRequest("Invalid Range header".to_string()));
     };
     if range.contains(',') {
-        return Err(AppError::BadRequest("Multiple ranges are not supported".to_string()));
+        return Err(AppError::BadRequest(
+            "Multiple ranges are not supported".to_string(),
+        ));
     }
     let Some((start_text, end_text)) = range.split_once('-') else {
         return Err(AppError::BadRequest("Invalid Range header".to_string()));
@@ -613,7 +687,10 @@ fn parse_range(
             .parse::<u64>()
             .map_err(|_| AppError::BadRequest("Invalid Range header".to_string()))?;
         if start >= size {
-            return Err(AppError::Message(StatusCode::RANGE_NOT_SATISFIABLE, "Range is outside the file".to_string()));
+            return Err(AppError::Message(
+                StatusCode::RANGE_NOT_SATISFIABLE,
+                "Range is outside the file".to_string(),
+            ));
         }
         let end = if end_text.is_empty() {
             size - 1
@@ -637,12 +714,18 @@ mod tests {
 
     #[test]
     fn parses_open_ended_range() {
-        assert_eq!(parse_range(Some(&http::HeaderValue::from_static("bytes=10-")), 100).unwrap(), (10, 99, true));
+        assert_eq!(
+            parse_range(Some(&http::HeaderValue::from_static("bytes=10-")), 100).unwrap(),
+            (10, 99, true)
+        );
     }
 
     #[test]
     fn parses_suffix_range() {
-        assert_eq!(parse_range(Some(&http::HeaderValue::from_static("bytes=-10")), 100).unwrap(), (90, 99, true));
+        assert_eq!(
+            parse_range(Some(&http::HeaderValue::from_static("bytes=-10")), 100).unwrap(),
+            (90, 99, true)
+        );
     }
 
     #[test]
@@ -658,6 +741,9 @@ mod tests {
 
     #[test]
     fn allows_nested_relative_path() {
-        assert_eq!(normalize_relative("folder/movie.mp4").unwrap(), PathBuf::from("folder/movie.mp4"));
+        assert_eq!(
+            normalize_relative("folder/movie.mp4").unwrap(),
+            PathBuf::from("folder/movie.mp4")
+        );
     }
 }

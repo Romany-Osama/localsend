@@ -488,6 +488,7 @@ class ServerService extends Notifier<ServerState?> {
         webSendState: current.webSendState?.copyWith(sessions: {}),
         webUpload: current.webUpload,
         webPin: current.webPin,
+        streamRoots: _streamRoots,
       );
     } catch (e) {
       _logger.severe('Failed to restart the server after its listener failed', e);
