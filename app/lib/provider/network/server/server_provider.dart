@@ -5,6 +5,7 @@ import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/cross_file.dart';
 import 'package:localsend_app/model/state/send/web/web_send_state.dart';
 import 'package:localsend_app/model/state/server/server_state.dart';
+import 'package:localsend_app/provider/home_hub_provider.dart';
 import 'package:localsend_app/provider/network/server/controller/receive_controller.dart';
 import 'package:localsend_app/provider/network/server/controller/send_controller.dart';
 import 'package:localsend_app/provider/network/server/server_utils.dart';
@@ -76,10 +77,21 @@ class ServerService extends Notifier<ServerState?> {
   StreamSubscription<HttpServerEvent>? _subscription;
   final Map<String, HttpServerStreamPrepareSessionEvent> pendingStreamSessions = {};
   final Map<String, HttpServerStreamFileRequestEvent> pendingStreamFiles = {};
+  final Map<String, HttpServerHomeHubInviteRequestEvent> pendingHomeHubInvites = {};
+  final Map<String, HttpServerHomeHubTransferOfferEvent> pendingHomeHubTransferOffers = {};
   final StreamController<HttpServerEvent> _streamEvents = StreamController<HttpServerEvent>.broadcast();
+  final StreamController<HttpServerHomeHubInviteRequestEvent> _homeHubEvents =
+      StreamController<HttpServerHomeHubInviteRequestEvent>.broadcast();
+  final StreamController<HttpServerHomeHubChatMessageEvent> _homeHubChatEvents =
+      StreamController<HttpServerHomeHubChatMessageEvent>.broadcast();
+  final StreamController<HttpServerHomeHubTransferOfferEvent> _homeHubTransferEvents =
+      StreamController<HttpServerHomeHubTransferOfferEvent>.broadcast();
   List<StreamRootParams> _streamRoots = const [];
 
   Stream<HttpServerEvent> get streamEvents => _streamEvents.stream;
+  Stream<HttpServerHomeHubInviteRequestEvent> get homeHubEvents => _homeHubEvents.stream;
+  Stream<HttpServerHomeHubChatMessageEvent> get homeHubChatEvents => _homeHubChatEvents.stream;
+  Stream<HttpServerHomeHubTransferOfferEvent> get homeHubTransferEvents => _homeHubTransferEvents.stream;
 
   ServerService();
 
@@ -189,6 +201,7 @@ class ServerService extends Notifier<ServerState?> {
                   )
                 : null,
             showToken: settings.showToken,
+            homeHubGroupIds: ref.read(homeHubProvider).groups.map((group) => group.id).toList(growable: false),
           ),
         );
 
@@ -236,6 +249,16 @@ class ServerService extends Notifier<ServerState?> {
     state = newServerState;
     _logger.info('Server started. (Port: $port, ${https ? 'HTTPS' : 'HTTP'} only)');
     return newServerState;
+  }
+
+  /// Pushes the current local Home Hub group authorization snapshot into Rust.
+  void syncHomeHubGroups() {
+    if (state == null) return;
+    ref.redux(parentIsolateProvider).dispatch(
+          IsolateHttpServerSetHomeHubGroupIdsAction(
+            groupIds: ref.read(homeHubProvider).groups.map((group) => group.id).toList(growable: false),
+          ),
+        );
   }
 
   Future<void> stopServer() async {
@@ -396,6 +419,31 @@ class ServerService extends Notifier<ServerState?> {
     );
   }
 
+  void acceptHomeHubInvite(String inviteId) {
+    final request = pendingHomeHubInvites.remove(inviteId);
+    if (request == null) return;
+    _homeHubEvents.add(request);
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerHomeHubInviteDecisionAction(inviteId: inviteId, accept: true),
+    );
+  }
+
+  void declineHomeHubInvite(String inviteId) {
+    final request = pendingHomeHubInvites.remove(inviteId);
+    if (request == null) return;
+    _homeHubEvents.add(request);
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerHomeHubInviteDecisionAction(inviteId: inviteId, accept: false),
+    );
+  }
+
+  void respondHomeHubTransferOffer({required String offerId, required bool accept}) {
+    if (pendingHomeHubTransferOffers.remove(offerId) == null) return;
+    ref.redux(parentIsolateProvider).dispatch(
+      IsolateHttpServerHomeHubTransferOfferDecisionAction(offerId: offerId, accept: accept),
+    );
+  }
+
   void _handleEvent(HttpServerEvent event) {
     switch (event) {
       case HttpServerStartedEvent():
@@ -434,6 +482,17 @@ class ServerService extends Notifier<ServerState?> {
         pendingStreamFiles[event.requestId] = event;
         _streamEvents.add(event);
         _logger.info('Stream file request from ${event.ip}: ${event.entry.name}');
+      case HttpServerHomeHubInviteRequestEvent():
+        pendingHomeHubInvites[event.inviteId] = event;
+        _homeHubEvents.add(event);
+        _logger.info('Home Hub invitation from ${event.senderAlias} (${event.ip})');
+      case HttpServerHomeHubChatMessageEvent():
+        _homeHubChatEvents.add(event);
+        _logger.info('Home Hub chat message from ${event.senderAlias}');
+      case HttpServerHomeHubTransferOfferEvent():
+        pendingHomeHubTransferOffers[event.offerId] = event;
+        _homeHubTransferEvents.add(event);
+        _logger.info('Home Hub transfer offer from ${event.senderAlias}');
       case HttpServerListenerFailedEvent():
         // ignore: discarded_futures
         _restartAfterListenerFailure(event.error);
