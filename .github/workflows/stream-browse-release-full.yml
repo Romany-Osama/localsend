@@ -331,9 +331,11 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Configure ad-hoc macOS signing for CI
+      - name: Configure unsigned macOS build for CI
         run: |
-          sed -i '' 's/DEVELOPMENT_TEAM = 3W7H4PYMCV;/DEVELOPMENT_TEAM = ;/g; s/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/g; s/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "Apple Development";/"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";/g; s/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' app/macos/Runner.xcodeproj/project.pbxproj
+          project=app/macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' -E 's/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = "";/g; s/CODE_SIGN_IDENTITY = "[^"]*";/CODE_SIGN_IDENTITY = "";/g; s/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "[^"]*";/"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";/g; s/CODE_SIGN_STYLE = [^;]*;/CODE_SIGN_STYLE = Manual;/g' "$project"
+          grep -n -E 'CODE_SIGN|DEVELOPMENT_TEAM' "$project" | head -60
 
       - name: Build macOS
         working-directory: app
@@ -341,7 +343,7 @@ jobs:
         env:
           CODE_SIGNING_ALLOWED: NO
           CODE_SIGNING_REQUIRED: NO
-          CODE_SIGN_IDENTITY: "-"
+          CODE_SIGN_IDENTITY: ""
 
       - name: Archive macOS app
         run: |
