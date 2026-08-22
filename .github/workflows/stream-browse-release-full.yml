@@ -331,14 +331,13 @@ jobs:
         working-directory: app
         run: flutter pub get
 
+      - name: Configure ad-hoc macOS signing for CI
+        run: |
+          sed -i '' 's/DEVELOPMENT_TEAM = 3W7H4PYMCV;/DEVELOPMENT_TEAM = ;/g; s/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/g; s/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "Apple Development";/"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";/g; s/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' app/macos/Runner.xcodeproj/project.pbxproj
+
       - name: Build macOS
         working-directory: app
-        run: |
-          flutter build macos --release
-        env:
-          CODE_SIGNING_ALLOWED: NO
-          CODE_SIGNING_REQUIRED: NO
-          CODE_SIGN_IDENTITY: ""
+        run: flutter build macos --release
 
       - name: Archive macOS app
         run: |
