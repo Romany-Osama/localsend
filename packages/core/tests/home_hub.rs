@@ -309,6 +309,47 @@ async fn authenticated_chat_event_reaches_the_application_stream() {
 }
 
 #[tokio::test]
+async fn chat_for_a_group_outside_the_allow_list_is_rejected() {
+    let server_identity = identity();
+    let sender_identity = identity();
+    let allowed_group_id = uuid::Uuid::new_v4().to_string();
+    let unauthorized_group_id = uuid::Uuid::new_v4().to_string();
+    let (handle, mut home_rx, stop_tx) =
+        start_server(&server_identity, vec![allowed_group_id]).await;
+    let sender = client(&sender_identity, &server_identity.fingerprint);
+    let payload = serde_json::json!({
+        "eventId": uuid::Uuid::new_v4().to_string(),
+        "groupId": unauthorized_group_id,
+        "senderDeviceId": sender_identity.fingerprint,
+        "senderAlias": "Sender",
+        "text": "must not cross group boundary",
+        "createdAt": "2026-08-22T12:00:00Z",
+    });
+
+    let error = sender
+        .post_json(
+            ProtocolType::Https,
+            "127.0.0.1",
+            handle.port(),
+            "/home-hub/v1/events",
+            payload,
+        )
+        .await
+        .unwrap_err();
+    match error {
+        localsend::http::client::ClientError::StatusCode(status) => assert_eq!(status.status, 403),
+        other => panic!("expected HTTP 403, got {other:?}"),
+    }
+    assert!(
+        tokio::time::timeout(Duration::from_millis(150), home_rx.recv())
+            .await
+            .is_err()
+    );
+    let _ = stop_tx.send(());
+    handle.wait_stopped().await;
+}
+
+#[tokio::test]
 async fn transfer_offer_waits_for_this_recipient_decision() {
     let server_identity = identity();
     let sender_identity = identity();

@@ -94,6 +94,10 @@ Future<RsHttpServer>  startServer({required int port , TlsConfig? tls , required
  Future<void>  respondHomeHubInvite({required String inviteId , required bool accept });
 
 
+/// Answers a pending Home Hub transfer offer.
+ Future<void>  respondHomeHubTransferOffer({required String offerId , required bool accept });
+
+
 /// Answers the pending [RsServerEvent::WebPrepareDownload] event.
 ///
 /// Passing `true` accepts the download request, `false` declines it.

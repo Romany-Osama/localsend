@@ -78,7 +78,7 @@ import 'package:uuid/uuid.dart';
                   String get codegenVersion => '2.12.0';
 
                   @override
-                  int get rustContentHash => 2147081203;
+                  int get rustContentHash => 939252305;
 
                   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
                     stem: 'rust_lib_localsend_app',
@@ -143,6 +143,8 @@ Future<void> crateApiServerRsHttpServerRespondFileDownload({required RsHttpServe
 Stream<double> crateApiServerRsHttpServerRespondFileUpload({required RsHttpServer that , required String sessionId , required String fileId , String? path , int? fileDescriptor , required BigInt fileSize });
 
 Future<void> crateApiServerRsHttpServerRespondHomeHubInvite({required RsHttpServer that , required String inviteId , required bool accept });
+
+Future<void> crateApiServerRsHttpServerRespondHomeHubTransferOffer({required RsHttpServer that , required String offerId , required bool accept });
 
 Future<void> crateApiServerRsHttpServerRespondPrepareDownload({required RsHttpServer that , required String sessionId , required bool accept });
 
@@ -1061,13 +1063,40 @@ sse_encode_bool(accept, serializer);
         );
 
 
+@override Future<void> crateApiServerRsHttpServerRespondHomeHubTransferOffer({required RsHttpServer that , required String offerId , required bool accept })  { return handler.executeNormal(NormalTask(
+            callFfi: (port_) {
+
+            final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
+sse_encode_String(offerId, serializer);
+sse_encode_bool(accept, serializer);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28, port: port_);
+
+            },
+            codec:
+        SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        )
+        ,
+            constMeta: kCrateApiServerRsHttpServerRespondHomeHubTransferOfferConstMeta,
+            argValues: [that, offerId, accept],
+            apiImpl: this,
+        )); }
+
+
+        TaskConstMeta get kCrateApiServerRsHttpServerRespondHomeHubTransferOfferConstMeta => const TaskConstMeta(
+            debugName: "RsHttpServer_respond_home_hub_transfer_offer",
+            argNames: ["that", "offerId", "accept"],
+        );
+
+
 @override Future<void> crateApiServerRsHttpServerRespondPrepareDownload({required RsHttpServer that , required String sessionId , required bool accept })  { return handler.executeNormal(NormalTask(
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_bool(accept, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29, port: port_);
 
             },
             codec:
@@ -1093,7 +1122,7 @@ sse_encode_bool(accept, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_opt_list_String(acceptedFileIds, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30, port: port_);
 
             },
             codec:
@@ -1120,7 +1149,7 @@ sse_encode_opt_list_String(acceptedFileIds, serializer);
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(requestId, serializer);
 sse_encode_bool(accept, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31, port: port_);
 
             },
             codec:
@@ -1147,7 +1176,7 @@ sse_encode_bool(accept, serializer);
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_String(sessionId, serializer);
 sse_encode_bool(accept, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32, port: port_);
 
             },
             codec:
@@ -1173,7 +1202,7 @@ sse_encode_bool(accept, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
 sse_encode_list_String(groupIds, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33, port: port_);
 
             },
             codec:
@@ -1198,7 +1227,7 @@ sse_encode_list_String(groupIds, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsHttpServer(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34, port: port_);
 
             },
             codec:
@@ -1223,7 +1252,7 @@ sse_encode_list_String(groupIds, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileReceiver(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35, port: port_);
 
             },
             codec:
@@ -1251,7 +1280,7 @@ sse_encode_list_String(groupIds, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileReceiver(that, serializer);
 sse_encode_StreamSink_list_prim_u_8_strict_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36, port: port_);
 
             },
             codec:
@@ -1279,7 +1308,7 @@ sse_encode_StreamSink_list_prim_u_8_strict_Sse(sink, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileSender(that, serializer);
 sse_encode_list_prim_u_8_loose(data, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37, port: port_);
 
             },
             codec:
@@ -1304,7 +1333,7 @@ sse_encode_list_prim_u_8_loose(data, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 37, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38, port: port_);
 
             },
             codec:
@@ -1332,7 +1361,7 @@ sse_encode_list_prim_u_8_loose(data, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39, port: port_);
 
             },
             codec:
@@ -1359,7 +1388,7 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40, port: port_);
 
             },
             codec:
@@ -1387,7 +1416,7 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_StreamSink_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCFileReceiver_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41, port: port_);
 
             },
             codec:
@@ -1417,7 +1446,7 @@ sse_encode_StreamSink_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRust
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42, port: port_);
 
             },
             codec:
@@ -1445,7 +1474,7 @@ sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_box_autoadd_rtc_send_file_response(status, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43, port: port_);
 
             },
             codec:
@@ -1471,7 +1500,7 @@ sse_encode_box_autoadd_rtc_send_file_response(status, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_String(pin, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44, port: port_);
 
             },
             codec:
@@ -1497,7 +1526,7 @@ sse_encode_String(pin, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCReceiveController(that, serializer);
 sse_encode_Set_String_None(selection, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45, port: port_);
 
             },
             codec:
@@ -1525,7 +1554,7 @@ sse_encode_Set_String_None(selection, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46, port: port_);
 
             },
             codec:
@@ -1552,7 +1581,7 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47, port: port_);
 
             },
             codec:
@@ -1580,7 +1609,7 @@ sse_encode_StreamSink_rtc_file_error_Sse(sink, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 48, port: port_);
 
             },
             codec:
@@ -1608,7 +1637,7 @@ sse_encode_StreamSink_rtc_status_Sse(sink, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_String(fileId, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 48, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 49, port: port_);
 
             },
             codec:
@@ -1634,7 +1663,7 @@ sse_encode_String(fileId, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRTCSendController(that, serializer);
 sse_encode_String(pin, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 49, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50, port: port_);
 
             },
             codec:
@@ -1665,7 +1694,7 @@ sse_encode_String(uri, serializer);
 sse_encode_box_autoadd_proposing_client_info(info, serializer);
 sse_encode_String(privateKey, serializer);
 sse_encode_DartFn_Inputs_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLsSignalingConnection_Output_unit_AnyhowException(onConnection, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51, port: port_);
 
             },
             codec:
@@ -1692,7 +1721,7 @@ sse_encode_DartFn_Inputs_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedR
             callFfi: () {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51)!;
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
 
             },
             codec:
@@ -1721,7 +1750,7 @@ sse_encode_String(cert, serializer);
 sse_encode_ls_http_client_version(version, serializer);
 sse_encode_opt_String(expectedFingerprint, serializer);
 sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53)!;
 
             },
             codec:
@@ -1746,7 +1775,7 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54, port: port_);
 
             },
             codec:
@@ -1771,7 +1800,7 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55, port: port_);
 
             },
             codec:
@@ -1796,7 +1825,7 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56, port: port_);
 
             },
             codec:
@@ -1821,7 +1850,7 @@ sse_encode_opt_box_autoadd_u_32(timeoutMs, serializer);
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 57, port: port_);
 
             },
             codec:
@@ -1852,7 +1881,7 @@ sse_encode_opt_String(path, serializer);
 sse_encode_opt_box_autoadd_i_32(fileDescriptor, serializer);
 sse_encode_opt_list_prim_u_8_strict(bytes, serializer);
 sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRsCancellationToken(cancelToken, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 57, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 58, port: port_);
 
             },
             codec:
@@ -1879,7 +1908,7 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             callFfi: () {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(name, serializer);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 58)!;
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 59)!;
 
             },
             codec:
@@ -1904,7 +1933,7 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             callFfi: (port_) {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(path, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 59, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 60, port: port_);
 
             },
             codec:
@@ -1929,7 +1958,7 @@ sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInn
             callFfi: () {
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(name, serializer);
-            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 60)!;
+            return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 61)!;
 
             },
             codec:
@@ -1967,7 +1996,7 @@ sse_encode_bool(download, serializer);
 sse_encode_String(certPem, serializer);
 sse_encode_String(privateKeyPem, serializer);
 sse_encode_u_64(timeoutMs, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 61, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 62, port: port_);
 
             },
             codec:
@@ -2003,7 +2032,7 @@ sse_encode_bool(verifyChecksums, serializer);
 sse_encode_opt_box_autoadd_web_params(web, serializer);
 sse_encode_opt_String(showToken, serializer);
 sse_encode_opt_list_String(homeHubGroupIds, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 62, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 63, port: port_);
 
             },
             codec:
@@ -2029,7 +2058,7 @@ sse_encode_opt_list_String(homeHubGroupIds, serializer);
 
             final serializer = SseSerializer(generalizedFrbRustBinding);sse_encode_String(cert, serializer);
 sse_encode_String(publicKey, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 63, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 64, port: port_);
 
             },
             codec:
@@ -4788,6 +4817,10 @@ sse_encode_String(self.sdp, serializer);
 
 /// Answers a pending Home Hub invitation request.
  Future<void>  respondHomeHubInvite({required String inviteId , required bool accept })=>RustLib.instance.api.crateApiServerRsHttpServerRespondHomeHubInvite(that: this, inviteId: inviteId, accept: accept);
+
+
+/// Answers a pending Home Hub transfer offer.
+ Future<void>  respondHomeHubTransferOffer({required String offerId , required bool accept })=>RustLib.instance.api.crateApiServerRsHttpServerRespondHomeHubTransferOffer(that: this, offerId: offerId, accept: accept);
 
 
 /// Answers the pending [RsServerEvent::WebPrepareDownload] event.

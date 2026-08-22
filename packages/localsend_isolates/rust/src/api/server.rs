@@ -933,6 +933,26 @@ impl RsHttpServer {
         Ok(())
     }
 
+    /// Answers a pending Home Hub transfer offer.
+    pub async fn respond_home_hub_transfer_offer(
+        &self,
+        offer_id: String,
+        accept: bool,
+    ) -> anyhow::Result<()> {
+        let Some(decision_tx) = self
+            .pending_home_hub_decisions
+            .lock()
+            .await
+            .remove(&offer_id)
+        else {
+            return Err(anyhow::anyhow!("No pending Home Hub transfer offer"));
+        };
+        decision_tx
+            .send(accept)
+            .map_err(|_| anyhow::anyhow!("Home Hub transfer offer already ended"))?;
+        Ok(())
+    }
+
     /// Answers a pending stream session request.
     pub async fn respond_stream_session(
         &self,

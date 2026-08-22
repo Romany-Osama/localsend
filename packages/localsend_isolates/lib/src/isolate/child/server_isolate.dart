@@ -557,6 +557,7 @@ Future<void> setupHttpServerIsolate(
                   verifyChecksums: startTask.verifyChecksums,
                   web: startTask.web,
                   showToken: startTask.showToken,
+                  homeHubGroupIds: startTask.homeHubGroupIds,
                 );
           } catch (e) {
             // Starting failed (e.g. the port is already in use).

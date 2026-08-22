@@ -54,6 +54,16 @@ class HttpServerService {
     await _requireServer().setHomeHubGroupIds(groupIds: groupIds);
   }
 
+  /// Answers a pending Home Hub invitation request.
+  Future<void> respondHomeHubInvite({required String inviteId, required bool accept}) async {
+    await _requireServer().respondHomeHubInvite(inviteId: inviteId, accept: accept);
+  }
+
+  /// Answers a pending Home Hub transfer offer.
+  Future<void> respondHomeHubTransferOffer({required String offerId, required bool accept}) async {
+    await _requireServer().respondHomeHubTransferOffer(offerId: offerId, accept: accept);
+  }
+
   /// Answers a pending prepare-upload request.
   /// [acceptedFileIds] is the subset of the offered files to accept; `null` declines the request.
   Future<void> respondPrepareUpload({required List<String>? acceptedFileIds}) async {
