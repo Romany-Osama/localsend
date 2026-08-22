@@ -7,7 +7,7 @@ permissions:
 
 env:
   FLUTTER_VERSION: "3.41.9"
-  RELEASE_TAG: v1.18.2-stream.9
+  RELEASE_TAG: v1.18.2-home-hub.1
 
 jobs:
   verify:
@@ -462,15 +462,17 @@ jobs:
       - name: Write release notes
         run: |
           cat > RELEASE_NOTES.md <<'EOF'
-          # LocalSend Stream & Browse v1.18.2-stream.9
+          # LocalSend Home Hub v1.18.2-home-hub.1
 
-          This release is built from the LocalSend fork's `stream-browse` branch. The original LocalSend transfer features remain available, and Stream & Browse adds LAN HTTP browsing, approval for every session, approval for every file request, temporary read-only grants, HTTP Range streaming, and in-app playback without saving the streamed file on the requesting device.
+          This release is built from the LocalSend fork and keeps the original LocalSend send, receive, discovery, Stream & Browse, and settings flows intact. Home Hub adds local group models and persistence, direct LAN/mTLS invitations, explicit accept/decline membership, viewer/sender/guest roles, guest expiry validation, local chat with an outbox and per-recipient delivery status, activity history, Revoke All, and group broadcast UI that reuses the original LocalSend v2 transfer machinery for each recipient independently.
 
-          All Stream & Browse data requests use the source device's discovered local IP and LocalSend HTTP port. The feature does not upload files to a cloud service or download them from the internet. The existing optional WebRTC signaling path is separate and remains disabled by default.
+          Home Hub control-plane requests use the discovered peer IP and LocalSend port directly. Rust validates the TLS certificate fingerprint, UUIDs, timestamps, role/expiry, group allow-list, message limits, and individual transfer-offer decisions before forwarding events to Flutter. No Home Hub message, metadata, or file body is sent to a cloud endpoint. The original optional WebRTC signaling path remains separate and disabled by default; Wi-Fi voice calls are not enabled in this release.
+
+          Broadcast transfers are never forced by a group owner: each device receives its own LocalSend approval request and can accept or reject independently. Offline chat deliveries remain in the sender's local outbox; there is no always-on central server and no promise of delivery while a peer is powered off. The local transfer flow supports the existing LocalSend resume/retry behavior, while Home Hub voice signaling and a richer cross-device activity synchronization layer remain future work.
 
           The Android artifacts are split per ABI. Linux includes x64 tar.gz, Debian, AppImage, and arm64 tar.gz/Debian packages. Windows includes x64 portable ZIP and installer EXE. macOS is provided as an unsigned app archive. iOS is provided as an unsigned `.app` archive because an App Store/TestFlight/device-installable IPA requires the owner's Apple signing certificates and provisioning profile.
 
-          The Android APKs use a temporary CI test key for evaluation. Windows and macOS artifacts are unsigned. GitHub Actions run the Rust integration tests for approval gating, traversal protection, Range streaming, empty files, and revoke before packaging.
+          The Android APKs use a temporary CI test key for evaluation. Windows and macOS artifacts are unsigned. GitHub Actions run Rust tests for Home Hub mTLS identity, unauthorized group events, guest expiry, independent transfer approval, Stream & Browse approval gates, traversal protection, Range streaming, empty files, and revoke before packaging.
           EOF
 
       - name: Create release and upload assets
@@ -479,6 +481,6 @@ jobs:
         run: |
           gh release create "${{ env.RELEASE_TAG }}" \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "LocalSend Stream & Browse ${{ env.RELEASE_TAG }}" \
+            --title "LocalSend Home Hub ${{ env.RELEASE_TAG }}" \
             --notes-file RELEASE_NOTES.md \
             release-assets/*
