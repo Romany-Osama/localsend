@@ -7,11 +7,11 @@ script:
 AppDir:
   path: AppDir
   app_info:
-    id: org.localsend.localsend_app
-    name: LocalSend
+    id: com.baytbeam.app
+    name: BaytBeam
     icon: localsend
     version: 1.18.2
-    exec: localsend_app
+    exec: baytbeam_app
     exec_args: $@
   apt:
     arch:

@@ -1,271 +1,88 @@
-# LocalSend
+# BaytBeam
 
 [![CI status][ci-badge]][ci-workflow]
-[![Translations][translate-badge]][translate-link]
-[![Packaging status][packaging-badge]][packaging-link]
+[![Release][release-badge]][release-link]
+[![License: Apache-2.0][license-badge]][license-link]
 
-[ci-badge]: https://github.com/localsend/localsend/actions/workflows/ci.yml/badge.svg
-[ci-workflow]: https://github.com/localsend/localsend/actions/workflows/ci.yml
-[translate-badge]: https://hosted.weblate.org/widget/localsend/app/svg-badge.svg
-[translate-link]: https://hosted.weblate.org/engage/localsend/
-[packaging-badge]: https://repology.org/badge/tiny-repos/localsend.svg
-[packaging-link]: https://repology.org/project/localsend/versions
+BaytBeam is an independent, open-source home LAN hub built from a [LocalSend](https://github.com/localsend/localsend) fork. It keeps the original LocalSend send, receive, discovery, HTTPS transfer, settings, and sharing flows, while adding optional home-focused features such as **Stream & Browse**, **Home Hub groups**, **local chat**, **per-device approvals**, **guest access**, and **activity controls**.
 
-[Homepage][homepage] • [Discord][discord] • [GitHub][github] • [Codeberg][codeberg]
+BaytBeam is designed for direct **LAN/Wi‑Fi communication only**. It does not require a cloud account, internet upload, internet download, or an always-on central home server. Files selected for Stream & Browse stay on the source device and are read only after the source approves the session and each requested file.
 
-[English (Default)](README.md) • [Беларуская](/support/readme/README_BE.md) • [Español](/support/readme/README_ES.md) • [فارسی](/support/readme/README_FA.md) • [Filipino](/support/readme/README_PH.md) • [Français](/support/readme/README_FR.md) • [Indonesia](/support/readme/README_ID.md) • [Italiano](/support/readme/README_IT.md) • [日本語](/support/readme/README_JA.md) • [ភាសាខ្មែរ](/support/readme/README_KM.md) • [한국어](/support/readme/README_KO.md) • [Polski](/support/readme/README_PL.md) • [Português Brasil](/support/readme/README_PT_BR.md) • [Русский](/support/readme/README_RU.md) • [ภาษาไทย](/support/readme/README_TH.md) • [Türkçe](/support/readme/README_TR.md) • [Українська](/support/readme/README_UK.md) • [Tiếng Việt](/support/readme/README_VI.md) • [中文](/support/readme/README_ZH.md)
+> **Important:** BaytBeam is not an official LocalSend release and is not affiliated with or endorsed by the LocalSend project. The original LocalSend attribution and license notices remain in this repository.
 
-[homepage]: https://localsend.org
-[discord]: https://discord.gg/GSRWmQNP87
-[github]: https://github.com/localsend/localsend
-[codeberg]: https://codeberg.org/localsend/localsend
+## Why BaytBeam can be installed next to LocalSend
 
-LocalSend is a free, open-source app that allows you to securely share files and messages with nearby devices over your local network without needing an internet connection.
+BaytBeam has its own product identity and platform installation identifiers. The Android application ID and Apple bundle ID are `com.baytbeam.app`, Linux uses the `baytbeam` package identity, and the Windows product uses a separate installer ID and `baytbeam_app.exe`. This lets users keep the official LocalSend application installed while trying BaytBeam.
 
-- [About](#about)
-- [Sponsors](#sponsors)
-- [Screenshots](#screenshots)
-- [Download](#download)
-- [How It Works](#how-it-works)
-- [Dependency Hierarchy](#dependency-hierarchy)
-- [Getting Started](#getting-started)
-- [Contributing](#contributing)
-  - [Translation](#translation)
-  - [Bug Fixes and Improvements](#bug-fixes-and-improvements)
-- [Troubleshooting](#troubleshooting)
-- [Building](#building)
-  - [Android](#android)
-  - [iOS](#ios)
-  - [macOS](#macos)
-  - [Windows](#windows)
-  - [Linux](#linux)
+The application artwork is intentionally unchanged from the upstream-based app. The visible product name, package identifiers, installer metadata, release assets, and documentation identify this build as **BaytBeam**.
 
-## About
+## Features
 
-LocalSend is a cross-platform app that enables secure communication between devices using a REST API and HTTPS encryption. Unlike other messaging apps that rely on external servers, LocalSend doesn't require an internet connection or third-party servers, making it a fast and reliable solution for local communication.
+### Original LocalSend functionality
 
-## Sponsors
+BaytBeam retains nearby-device discovery, file and text transfer, transfer approval, HTTPS encryption, share-sheet integration, receive progress, the existing transfer resume behavior, and the original platform targets. The underlying LocalSend protocol and internal Rust/Flutter isolate names remain where changing them would add compatibility risk.
 
-Browser testing via
+### Home Hub
 
-<a href="https://www.testmuai.com/?utm_medium=sponsor&utm_source=localsend" target="_blank">
-    <img src="https://localsend.org/img/sponsors/tesmu.svg" style="vertical-align: middle;" width="250" height="45" />
-</a>
+Home Hub adds local groups with viewer, sender, owner, and time-limited guest roles. Invitations require approval on the target device. Chat messages are stored locally and maintain an outbox and per-peer delivery state. Revoke All clears local guest permissions, pending invitations, and relevant outbox state, then records the action in the local activity log.
 
-## Screenshots
+Group broadcast reuses the original LocalSend transfer session for every recipient. Each recipient therefore receives an independent approval request and can accept or reject without the group owner being able to force a file onto that device.
 
-<img src="https://localsend.org/img/screenshot-iphone.webp" alt="iPhone screenshot" height="300"/> <img src="https://localsend.org/img/screenshot-pc.webp" alt="PC screenshot" height="300"/>
+### Stream & Browse
 
-## Download
+A device can publish a selected local directory. Another device can request a read-only temporary browsing session, and the source device must approve the session. Every file request is approved separately before a short-lived grant is issued. The source remains the storage location; BaytBeam does not copy the file to a cloud service just to play or browse it.
 
-[![Packaging status](https://repology.org/badge/tiny-repos/localsend.svg)](https://repology.org/project/localsend/versions)
+## Network and privacy model
 
-It is recommended to download the app either from an app store or from a package manager because the app does not have an auto-update.
+BaytBeam uses direct peer addresses discovered on the local network and HTTPS/mTLS identity checks. Home Hub endpoints are not a cloud relay. A router, firewall, guest-network isolation, VPN, or port forwarding configuration can still change what devices can reach; users should keep the app on a trusted home network and avoid exposing its port to the public internet.
 
-| Windows                 | macOS                   | Linux              | Android        | iOS           | Fire OS    |
-|-------------------------|-------------------------|--------------------|----------------|---------------|------------|
-| [Winget][]              | [App Store][]           | [Flathub][]        | [Play Store][] | [App Store][] | [Amazon][] |
-| [Scoop][]               | [Homebrew][]            | [Nixpkgs][]        | [F-Droid][]    |               |            |
-| [Chocolatey][]          | [DMG Installer][latest] | [Snap][]           | [APK][latest]  |               |            |
-| [EXE Installer][latest] |                         | [AUR][]            |                |               |            |
-| [Portable ZIP][latest]  |                         | [TAR][latest]      |                |               |            |
-|                         |                         | [DEB][latest]      |                |               |            |
-|                         |                         | [AppImage][latest] |                |               |            |
+The optional WebRTC signaling path remains separate and disabled by default. Wi‑Fi voice calls are not part of this release.
 
-Read more about [distribution channels][].
+## Current limitations
 
-Windows binaries are signed. Read more about the [Code signing policy][].
+The Home Hub outbox does not yet automatically resend when an offline peer returns. Activity history is local rather than synchronized across all devices. Revoke All currently applies locally and does not provide a complete remote-session notification protocol. Group membership authorization still uses the local certificate identity and group allow-list rather than an owner-signed cross-device membership snapshot.
 
-> [!CAUTION]
-> **Unofficial MSIX preview:** you can try builds from the latest commits at [localsend.ob-buff.dev](https://localsend.ob-buff.dev/). Stability is not guaranteed and all custom code tweaks are listed on that site.
+The current BroadcastPage uses the original LocalSend per-recipient approval flow directly. The Home Hub transfer-offer endpoint is available as an independently tested control-plane component, but it is not an obligatory preflight stage for the current broadcast UI.
 
-[windows store]: https://www.microsoft.com/store/apps/9NCB4Z0TZ6RR
-[app store]: https://apps.apple.com/us/app/localsend/id1661733229
-[play store]: https://play.google.com/store/apps/details?id=org.localsend.localsend_app
-[f-droid]: https://f-droid.org/packages/org.localsend.localsend_app
-[amazon]: https://www.amazon.com/dp/B0BW6MP732
-[winget]: https://github.com/microsoft/winget-pkgs/tree/master/manifests/l/LocalSend/LocalSend
-[scoop]: https://scoop.sh/#/apps?s=0&d=1&o=true&q=localsend&id=fb88113be361ca32c0dcac423cb4afdeda0b0c66
-[chocolatey]: https://community.chocolatey.org/packages/localsend
-[homebrew]: https://formulae.brew.sh/cask/localsend
-[flathub]: https://flathub.org/apps/details/org.localsend.localsend_app
-[nixpkgs]: https://search.nixos.org/packages?show=localsend
-[snap]: https://snapcraft.io/localsend
-[aur]: https://aur.archlinux.org/packages/localsend-bin
-[latest]: https://github.com/localsend/localsend/releases/latest
-[distribution channels]: https://github.com/localsend/localsend/blob/main/CONTRIBUTING.md#distribution
-[code signing policy]: https://github.com/localsend/localsend/blob/main/CODE_SIGNING.md
+## Downloads
 
-**Compatibility**
+Download the latest branded assets from the [BaytBeam releases page][release-link]. Android releases are split by ABI. Windows provides a portable ZIP and installer EXE. Linux provides x64 and arm64 packages where the workflow supports them. macOS and iOS archives are unsigned in the public CI release unless the maintainer supplies Apple signing credentials.
 
-| Platform | Minimum Version | Note                                                                                                                        |
-|----------|-----------------|-----------------------------------------------------------------------------------------------------------------------------|
-| Android  | 5.0             | -                                                                                                                           |
-| iOS      | 12.0            | -                                                                                                                           |
-| macOS    | 11 Big Sur      | Use OpenCore Legacy Patcher 2.0.2 (See [#1005](https://github.com/localsend/localsend/issues/1005#issuecomment-2449899384)) |
-| Windows  | 10              | The last version to support Windows 7 is v1.15.4. There might be backports of newer versions for Windows 7 in the future.   |
-| Linux    | N.A.            | Deps: Gnome: `xdg-desktop-portal` and `xdg-desktop-portal-gtk`, KDE: `xdg-desktop-portal` and `xdg-desktop-portal-kde`      |
+The original upstream-based release `v1.18.2-stream.9` remains available separately. BaytBeam releases use a distinct tag and artifact prefix and do not replace the upstream-based release.
 
-## Setup
+## Building from source
 
-In most cases, LocalSend should work out of the box. However, if you are having trouble sending or receiving files, you may need to configure your firewall to allow LocalSend to communicate over your local network.
+Requirements include Flutter 3.41.x, Dart 3.11.x, Rust stable, and the platform dependencies required by Flutter and `media_kit`.
 
-| Traffic Type | Protocol | Port  | Action |
-|--------------|----------|-------|--------|
-| Incoming     | TCP, UDP | 53317 | Allow  |
-| Outgoing     | TCP, UDP | Any   | Allow  |
+```bash
+cd app
+flutter pub get
+flutter run
+```
 
-Also make sure to disable AP isolation on your router. It should be usually disabled by default but some routers may have it enabled (especially guest networks).
-See [troubleshooting](#troubleshooting) for more information.
+For a release build, use the platform command appropriate to the target. The project keeps the Dart package and Rust FFI library names stable internally, so package imports and generated bridge code remain compatible with the fork changes.
 
-**Portable Mode**
+```bash
+flutter build apk --release --split-per-abi
+flutter build windows --release
+flutter build linux --release
+flutter build macos --release
+flutter build ios --release --no-codesign
+```
 
-(Introduced in v1.13.0)
-
-Create a file named `settings.json` located in the same directory as the executable.
-This file can be empty.
-The app will use this file to store settings instead of the default location.
-
-**Start hidden**
-
-(Updated in v1.15.0)
-
-To start the app hidden (only in tray), use the `--hidden` flag (example: `localsend_app.exe --hidden`).
-
-On v1.14.0 and earlier, the app starts hidden if `autostart` flag is set, and the hidden setting is enabled.
-
-## How It Works
-
-LocalSend uses a secure communication protocol that allows devices to communicate with each other using a REST API. All data is sent securely over HTTPS, and the TLS/SSL certificate is generated on the fly on each device, ensuring maximum security.
-
-For more information on the LocalSend Protocol, see the [documentation](https://github.com/localsend/protocol).
-
-## Dependency Hierarchy
-
-![Dependency hierarchy](support/docs/dependency-hierarchy.svg)
-
-## Getting Started
-
-To compile LocalSend from the source code, follow these steps:
-
-1. Install Flutter [directly](https://flutter.dev) or using [fvm](https://fvm.app) (see [version required](.fvmrc))
-2. Install [Rust](https://www.rust-lang.org/tools/install)
-3. Clone the `LocalSend` repository
-4. Run `cd app` to enter the app directory
-5. Run `flutter pub get` to download dependencies
-6. Run `flutter run` to start the app
-
-> [!NOTE]
-> LocalSend currently requires an older Flutter version (specified in [.fvmrc](.fvmrc))
-> and thus build issues may be caused by a mismatch between the required and the (system-wide) installed Flutter version.  
-> To make development more consistent, LocalSend uses [fvm](https://fvm.app) to manage the project Flutter version.
-> After installing `fvm`, run `fvm flutter` instead of `flutter`.
+Android releases should use a maintainer-controlled keystore. A self-signed Windows certificate can identify the BaytBeam publisher but will still produce a SmartScreen trust warning until that certificate is installed or replaced by a publicly trusted code-signing certificate. This fork keeps the maintainer key material outside Git; CI uses it only through the `BAYTBEAM_ANDROID_*` and `BAYTBEAM_WINDOWS_*` repository secrets. Apple device-installable builds require the maintainer's Apple Developer certificates and provisioning profiles.
 
 ## Contributing
 
-We welcome contributions from anyone interested in helping improve LocalSend. If you'd like to contribute, there are a few ways to get involved:
+Pull requests and issue reports are welcome. Please clearly state whether a change belongs to the original LocalSend-compatible flow or to BaytBeam Home Hub. Do not remove upstream copyright, attribution, license, or trademark notices from files derived from LocalSend.
 
-### Translation
+## License and attribution
 
-You can help translate LocalSend into other languages. We use the [Weblate](https://hosted.weblate.org/projects/localsend/app) platform to manage translations.
+The repository remains licensed under the **Apache License 2.0**. This is the upstream-compatible open-source license retained for the derivative work; the `NOTICE` file explains the BaytBeam fork identity and the distinction from official LocalSend releases. See [LICENSE][license-link].
 
-Alternatively, you can also contribute by forking this repository and adding translations manually.
-
-The translations are located in the [app/assets/i18n](https://github.com/localsend/localsend/tree/main/app/assets/i18n) directory. Edit the `_missing_translations_<locale>.json` or `strings_<locale>.i18n.json` file to add or update translations.
-
-<a href="https://hosted.weblate.org/engage/localsend/">
-<img src="https://hosted.weblate.org/widget/localsend/app/multi-auto.svg" alt="Translation status" />
-</a>
-
-**_Take note:_ Fields decorated with `@` are not meant to be translated; they are not used in the app in any way, being merely informative text about the file or to give context to the translator.**
-
-### Bug Fixes and Improvements
-
-- **Bug Fixes:** If you find a bug, please create a pull request with a clear description of the issue and how to fix it.
-- **Improvements:** Have an idea for how to improve LocalSend? Please create an issue first to discuss why the improvement is needed.
-
-For more information, see the [contributing guide](https://github.com/localsend/localsend/blob/main/CONTRIBUTING.md).
-
-## Troubleshooting
-
-| Issue              | Platform (Sending) | Platform (Receiving) | Solution                                                                                                                                |
-|--------------------|--------------------|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| Device not visible | Any                | Any                  | Make sure to disable AP-Isolation on your router. If it is enabled, connections between devices are forbidden.                          |
-| Device not visible | Any                | Windows              | Make sure to configure your network as a "private" network. Windows might be more restrictive when the network is configured as public. |
-| Device not visible | macOS, iOS         | Any                  | You can try to toggle the "Local Network" permission under "Privacy" in the OS settings.                                                |
-| Speed too slow     | Any                | Any                  | Use 5 Ghz; Disable encryption on both devices                                                                                           |
-| Speed too slow     | Any                | Android              | Known issue. https://github.com/flutter-cavalry/saf_stream/issues/4                                                                     |
-
-## Building
-
-These commands are intended for maintainers only. Make sure to run them from the `app` directory.
-
-### Android
-
-Traditional APK
-
-```bash
-flutter build apk
-```
-
-AppBundle for Google Play
-
-```bash
-flutter build appbundle
-```
-
-### iOS
-
-```bash
-flutter build ipa
-```
-
-### macOS
-
-```bash
-flutter build macos
-```
-
-### Windows
-
-**Traditional**
-
-```bash
-flutter build windows
-```
-
-**Local MSIX App**
-
-```bash
-flutter pub run msix:create
-```
-
-**Store ready**
-
-```bash
-flutter pub run msix:create --store
-```
-
-### Linux
-
-**Traditional**
-
-```bash
-flutter build linux
-```
-
-**AppImage**
-
-```bash
-appimage-builder --recipe AppImageBuilder.yml
-```
-
-**Snap**
-
-Instructions in [localsend/snap/README.md](https://github.com/localsend/snap/blob/main/README.md)
-
-## Contributors
-
-<a href="https://github.com/localsend/localsend/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=localsend/localsend"  alt="Localsend Contributors"/>
-</a>
+[ci-badge]: https://github.com/Romany-Osama/localsend/actions/workflows/stream-browse-release-full.yml/badge.svg
+[ci-workflow]: https://github.com/Romany-Osama/localsend/actions/workflows/stream-browse-release-full.yml
+[release-badge]: https://img.shields.io/github/v/release/Romany-Osama/localsend?label=BaytBeam%20release
+[release-link]: https://github.com/Romany-Osama/localsend/releases
+[license-badge]: https://img.shields.io/badge/license-Apache--2.0-blue.svg
+[license-link]: https://github.com/Romany-Osama/localsend/blob/stream-browse/LICENSE

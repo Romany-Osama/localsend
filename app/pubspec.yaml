@@ -1,6 +1,6 @@
 name: localsend_app
-description: An open source cross-platform alternative to AirDrop
-homepage: https://localsend.org/
+description: An open source LAN-only home hub fork based on LocalSend
+homepage: https://github.com/Romany-Osama/localsend
 publish_to: "none"
 resolution: workspace
 

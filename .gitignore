@@ -14,6 +14,12 @@
 
 /secrets
 
+# BaytBeam private signing material generated for local/CI builds
+/app/android/*.jks
+/app/android/key.properties
+*.pfx
+*.key
+
 # FVM Version Cache
 .fvm/
 

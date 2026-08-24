@@ -1,6 +1,6 @@
 {
-  "name": "localsend_app",
-  "short_name": "localsend_app",
+  "name": "baytbeam_app",
+  "short_name": "baytbeam_app",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0175C2",

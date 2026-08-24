@@ -7,7 +7,7 @@ permissions:
 
 env:
   FLUTTER_VERSION: "3.41.9"
-  RELEASE_TAG: v1.18.2-home-hub.1
+  RELEASE_TAG: v1.18.2-baytbeam.1
 
 jobs:
   verify:
@@ -68,11 +68,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create temporary release keystore
+      - name: Configure BaytBeam release signing
         working-directory: app/android
+        env:
+          BAYTBEAM_ANDROID_KEYSTORE_BASE64: ${{ secrets.BAYTBEAM_ANDROID_KEYSTORE_BASE64 }}
+          BAYTBEAM_ANDROID_STORE_PASSWORD: ${{ secrets.BAYTBEAM_ANDROID_STORE_PASSWORD }}
+          BAYTBEAM_ANDROID_KEY_PASSWORD: ${{ secrets.BAYTBEAM_ANDROID_KEY_PASSWORD }}
         run: |
-          keytool -genkeypair -v -keystore stream-browse-release.jks -storepass android -alias stream-browse -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LocalSend Stream Browse, OU=Open Source, O=LocalSend, L=Unknown, S=Unknown, C=US"
-          printf 'storePassword=android\nkeyPassword=android\nkeyAlias=stream-browse\nstoreFile=../stream-browse-release.jks\n' > key.properties
+          if [ -n "$BAYTBEAM_ANDROID_KEYSTORE_BASE64" ] && [ -n "$BAYTBEAM_ANDROID_STORE_PASSWORD" ] && [ -n "$BAYTBEAM_ANDROID_KEY_PASSWORD" ]; then
+            echo "$BAYTBEAM_ANDROID_KEYSTORE_BASE64" | base64 --decode > baytbeam-release.jks
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=baytbeam\nstoreFile=../baytbeam-release.jks\n' "$BAYTBEAM_ANDROID_STORE_PASSWORD" "$BAYTBEAM_ANDROID_KEY_PASSWORD" > key.properties
+            echo "Using the maintainer-controlled BaytBeam Android keystore."
+          else
+            keytool -genkeypair -noprompt -v -keystore baytbeam-release.jks -storepass baytbeam-ci-only -alias baytbeam -keypass baytbeam-ci-only -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=BaytBeam, OU=BaytBeam Project, O=BaytBeam Project, L=Cairo, ST=Cairo, C=EG"
+            printf 'storePassword=baytbeam-ci-only\nkeyPassword=baytbeam-ci-only\nkeyAlias=baytbeam\nstoreFile=../baytbeam-release.jks\n' > key.properties
+            echo "WARNING: BAYTBEAM Android secrets are not configured; this build uses a disposable CI key."
+          fi
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -101,14 +112,14 @@ jobs:
       - name: Rename APKs
         run: |
           mkdir -p release-assets
-          cp app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release-assets/LocalSend-${{ env.RELEASE_TAG }}-android-armeabi-v7a.apk
-          cp app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release-assets/LocalSend-${{ env.RELEASE_TAG }}-android-arm64.apk
-          cp app/build/app/outputs/flutter-apk/app-x86_64-release.apk release-assets/LocalSend-${{ env.RELEASE_TAG }}-android-x86_64.apk
+          cp app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release-assets/BaytBeam-${{ env.RELEASE_TAG }}-android-armeabi-v7a.apk
+          cp app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release-assets/BaytBeam-${{ env.RELEASE_TAG }}-android-arm64.apk
+          cp app/build/app/outputs/flutter-apk/app-x86_64-release.apk release-assets/BaytBeam-${{ env.RELEASE_TAG }}-android-x86_64.apk
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: stream-browse-android-full
+          name: baytbeam-android-full
           path: release-assets/*.apk
           if-no-files-found: error
 
@@ -147,7 +158,7 @@ jobs:
       - name: Create Linux tarball
         run: |
           mkdir -p release-assets
-          tar -czf release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-x64.tar.gz -C app/build/linux/x64/release/bundle .
+          tar -czf release-assets/BaytBeam-${{ env.RELEASE_TAG }}-linux-x64.tar.gz -C app/build/linux/x64/release/bundle .
 
       - name: Build Debian package
         run: |
@@ -155,7 +166,7 @@ jobs:
           (cd app && PATH="$HOME/.pub-cache/bin:$PATH" flutter_distributor package --platform linux --targets deb)
           deb_path=$(find app/dist -type f -name '*.deb' -print -quit)
           test -n "$deb_path"
-          cp "$deb_path" release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-x64.deb
+          cp "$deb_path" release-assets/BaytBeam-${{ env.RELEASE_TAG }}-linux-x64.deb
 
       - name: Prepare AppImage
         run: |
@@ -176,12 +187,12 @@ jobs:
         run: |
           appimage=$(find . -maxdepth 1 -type f -name '*.AppImage' -print -quit)
           test -n "$appimage"
-          cp "$appimage" release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-x64.AppImage
+          cp "$appimage" release-assets/BaytBeam-${{ env.RELEASE_TAG }}-linux-x64.AppImage
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: stream-browse-linux-x64
+          name: baytbeam-linux-x64
           path: release-assets/*
           if-no-files-found: error
 
@@ -219,7 +230,7 @@ jobs:
       - name: Create Linux arm64 tarball
         run: |
           mkdir -p release-assets
-          tar -czf release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-arm64.tar.gz -C app/build/linux/arm64/release/bundle .
+          tar -czf release-assets/BaytBeam-${{ env.RELEASE_TAG }}-linux-arm64.tar.gz -C app/build/linux/arm64/release/bundle .
 
       - name: Build Debian arm64 package
         run: |
@@ -227,12 +238,12 @@ jobs:
           (cd app && PATH="$HOME/.pub-cache/bin:$PATH" flutter_distributor package --platform linux --targets deb)
           deb_path=$(find app/dist -type f -name '*.deb' -print -quit)
           test -n "$deb_path"
-          cp "$deb_path" release-assets/LocalSend-${{ env.RELEASE_TAG }}-linux-arm64.deb
+          cp "$deb_path" release-assets/BaytBeam-${{ env.RELEASE_TAG }}-linux-arm64.deb
 
       - name: Upload Linux arm64 artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: stream-browse-linux-arm64
+          name: baytbeam-linux-arm64
           path: release-assets/*
           if-no-files-found: error
 
@@ -268,7 +279,24 @@ jobs:
         run: |
           $makepri = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\makepri.exe' | Select-Object -Last 1
           & $makepri.FullName new /pr support\build\msix\content /cf support\build\msix\priconfig.xml /mn support\build\msix\content\AppxManifest.xml /of support\build\msix\content\resources.pri /o
-          & 'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe' pack /o /d support\build\msix\content /nv /p app\windows\localsend_msix_helper.msix
+          & 'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\makeappx.exe' pack /o /d support\build\msix\content /nv /p app\windows\baytbeam_msix_helper.msix
+
+      - name: Sign BaytBeam MSIX helper when configured
+        shell: pwsh
+        env:
+          BAYTBEAM_WINDOWS_PFX_BASE64: ${{ secrets.BAYTBEAM_WINDOWS_PFX_BASE64 }}
+          BAYTBEAM_WINDOWS_PFX_PASSWORD: ${{ secrets.BAYTBEAM_WINDOWS_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:BAYTBEAM_WINDOWS_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:BAYTBEAM_WINDOWS_PFX_PASSWORD)) {
+            Write-Host "MSIX helper remains unsigned because BaytBeam Windows signing secrets are not configured."
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP "baytbeam-code-signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:BAYTBEAM_WINDOWS_PFX_BASE64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\signtool.exe' | Select-Object -Last 1
+          if (-not $signtool) { throw "signtool.exe was not found" }
+          & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:BAYTBEAM_WINDOWS_PFX_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "app/windows/baytbeam_msix_helper.msix"
+          Write-Host "Signed BaytBeam MSIX helper with the maintainer certificate."
 
       - name: Patch media_kit CMake extraction
         shell: pwsh
@@ -305,12 +333,30 @@ jobs:
         working-directory: app
         run: flutter build windows --release
 
+      - name: Sign BaytBeam Windows executable when configured
+        shell: pwsh
+        env:
+          BAYTBEAM_WINDOWS_PFX_BASE64: ${{ secrets.BAYTBEAM_WINDOWS_PFX_BASE64 }}
+          BAYTBEAM_WINDOWS_PFX_PASSWORD: ${{ secrets.BAYTBEAM_WINDOWS_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:BAYTBEAM_WINDOWS_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:BAYTBEAM_WINDOWS_PFX_PASSWORD)) {
+            Write-Host "WARNING: Windows signing secrets are not configured; the executable and installer will remain unsigned."
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP "baytbeam-code-signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:BAYTBEAM_WINDOWS_PFX_BASE64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\signtool.exe' | Select-Object -Last 1
+          if (-not $signtool) { throw "signtool.exe was not found" }
+          $bundle = "app/build/windows/x64/runner/Release"
+          & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:BAYTBEAM_WINDOWS_PFX_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "$bundle\baytbeam_app.exe"
+          Write-Host "Signed BaytBeam executable with the maintainer certificate."
+
       - name: Create Windows portable ZIP and installer EXE
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release-assets | Out-Null
           $bundle = "app/build/windows/x64/runner/Release"
-          Compress-Archive -Path "$bundle/*" -DestinationPath "release-assets/LocalSend-${{ env.RELEASE_TAG }}-windows-x64-portable.zip" -Force
+          Compress-Archive -Path "$bundle/*" -DestinationPath "release-assets/BaytBeam-${{ env.RELEASE_TAG }}-windows-x64-portable.zip" -Force
           $payload = Join-Path $env:RUNNER_TEMP "localsend-inno"
           $result = Join-Path $env:RUNNER_TEMP "localsend-inno-result"
           New-Item -ItemType Directory -Force -Path $payload, $result | Out-Null
@@ -318,12 +364,29 @@ jobs:
           Copy-Item -Path "app/assets/packaging/logo.ico" -Destination $payload
           Copy-Item -Path "support/build/windows/x64/*" -Destination $payload -Recurse
           iscc /DSkipSignTool "/DPayloadDir=$payload" "/DResultDir=$result" support/scripts/compile_windows_exe-inno.iss
-          Copy-Item -Path "$result/localsend.exe" -Destination "release-assets/LocalSend-${{ env.RELEASE_TAG }}-windows-x64.exe"
+          Copy-Item -Path "$result/baytbeam-setup.exe" -Destination "release-assets/BaytBeam-${{ env.RELEASE_TAG }}-windows-x64.exe"
+
+      - name: Sign BaytBeam installer when configured
+        shell: pwsh
+        env:
+          BAYTBEAM_WINDOWS_PFX_BASE64: ${{ secrets.BAYTBEAM_WINDOWS_PFX_BASE64 }}
+          BAYTBEAM_WINDOWS_PFX_PASSWORD: ${{ secrets.BAYTBEAM_WINDOWS_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:BAYTBEAM_WINDOWS_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:BAYTBEAM_WINDOWS_PFX_PASSWORD)) {
+            Write-Host "Windows installer remains unsigned because BAYTBEAM Windows signing secrets are not configured."
+            exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP "baytbeam-code-signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:BAYTBEAM_WINDOWS_PFX_BASE64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\signtool.exe' | Select-Object -Last 1
+          if (-not $signtool) { throw "signtool.exe was not found" }
+          & $signtool.FullName sign /fd SHA256 /f $pfx /p $env:BAYTBEAM_WINDOWS_PFX_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "release-assets/BaytBeam-${{ env.RELEASE_TAG }}-windows-x64.exe"
+          Write-Host "Signed BaytBeam installer with the maintainer certificate."
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: stream-browse-windows-full
+          name: baytbeam-windows-full
           path: release-assets/*
           if-no-files-found: error
 
@@ -369,12 +432,12 @@ jobs:
           mkdir -p release-assets
           app=$(find app/build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
           test -n "$app"
-          ditto -c -k --sequesterRsrc --keepParent "$app" release-assets/LocalSend-${{ env.RELEASE_TAG }}-macos-unsigned.zip
+          ditto -c -k --sequesterRsrc --keepParent "$app" release-assets/BaytBeam-${{ env.RELEASE_TAG }}-macos-unsigned.zip
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stream-browse-macos
+          name: baytbeam-macos
           path: release-assets/*.zip
           if-no-files-found: error
 
@@ -409,12 +472,12 @@ jobs:
         run: |
           mkdir -p release-assets
           test -d app/build/ios/iphoneos/Runner.app
-          ditto -c -k --sequesterRsrc --keepParent app/build/ios/iphoneos/Runner.app release-assets/LocalSend-${{ env.RELEASE_TAG }}-ios-unsigned.app.zip
+          ditto -c -k --sequesterRsrc --keepParent app/build/ios/iphoneos/Runner.app release-assets/BaytBeam-${{ env.RELEASE_TAG }}-ios-unsigned.app.zip
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stream-browse-ios
+          name: baytbeam-ios
           path: release-assets/*.zip
           if-no-files-found: error
 
@@ -423,48 +486,54 @@ jobs:
     needs: [verify, build_android, build_linux_x64, build_linux_arm64, build_windows, build_macos, build_ios]
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout source metadata
+        uses: actions/checkout@v4
+
       - name: Download Android artifacts
         uses: actions/download-artifact@v4
         with:
-          name: stream-browse-android-full
+          name: baytbeam-android-full
           path: release-assets
 
       - name: Download Linux x64 artifacts
         uses: actions/download-artifact@v4
         with:
-          name: stream-browse-linux-x64
+          name: baytbeam-linux-x64
           path: release-assets
 
       - name: Download Linux arm64 artifacts
         uses: actions/download-artifact@v4
         with:
-          name: stream-browse-linux-arm64
+          name: baytbeam-linux-arm64
           path: release-assets
 
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
-          name: stream-browse-windows-full
+          name: baytbeam-windows-full
           path: release-assets
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: stream-browse-macos
+          name: baytbeam-macos
           path: release-assets
 
       - name: Download iOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: stream-browse-ios
+          name: baytbeam-ios
           path: release-assets
+
+      - name: Add public BaytBeam Windows certificate
+        run: cp support/signing/baytbeam-code-signing.cer release-assets/baytbeam-code-signing.cer
 
       - name: Write release notes
         run: |
           cat > RELEASE_NOTES.md <<'EOF'
-          # LocalSend Home Hub v1.18.2-home-hub.1
+          # BaytBeam Home Hub v1.18.2-baytbeam.1
 
-          This release is built from the LocalSend fork and keeps the original LocalSend send, receive, discovery, Stream & Browse, and settings flows intact. Home Hub adds local group models and persistence, direct LAN/mTLS invitations, explicit accept/decline membership, viewer/sender/guest roles, guest expiry validation, local chat with an outbox and per-recipient delivery status, activity history, Revoke All, and group broadcast UI that reuses the original LocalSend v2 transfer machinery for each recipient independently.
+          This release is an independent BaytBeam build based on the LocalSend fork and keeps the original LocalSend send, receive, discovery, Stream & Browse, and settings flows intact. Home Hub adds local group models and persistence, direct LAN/mTLS invitations, explicit accept/decline membership, viewer/sender/guest roles, guest expiry validation, local chat with an outbox and per-recipient delivery status, activity history, Revoke All, and group broadcast UI that reuses the original LocalSend v2 transfer machinery for each recipient independently.
 
           Home Hub control-plane requests use the discovered peer IP and LocalSend port directly. Rust validates the TLS certificate fingerprint, UUIDs, timestamps, role/expiry, group allow-list, message limits, and individual transfer-offer decisions before forwarding events to Flutter. No Home Hub message, metadata, or file body is sent to a cloud endpoint. The original optional WebRTC signaling path remains separate and disabled by default; Wi-Fi voice calls are not enabled in this release.
 
@@ -472,7 +541,7 @@ jobs:
 
           The Android artifacts are split per ABI. Linux includes x64 tar.gz, Debian, AppImage, and arm64 tar.gz/Debian packages. Windows includes x64 portable ZIP and installer EXE. macOS is provided as an unsigned app archive. iOS is provided as an unsigned `.app` archive because an App Store/TestFlight/device-installable IPA requires the owner's Apple signing certificates and provisioning profile.
 
-          The Android APKs use a temporary CI test key for evaluation. Windows and macOS artifacts are unsigned. GitHub Actions run Rust tests for Home Hub mTLS identity, unauthorized group events, guest expiry, independent transfer approval, Stream & Browse approval gates, traversal protection, Range streaming, empty files, and revoke before packaging.
+          Android APKs use the maintainer-controlled BaytBeam keystore when the BAYTBEAM_ANDROID_* repository secrets are configured; otherwise CI uses a clearly labelled disposable key that cannot update a previous maintainer-signed installation. Windows executable, MSIX helper, and installer signing use the maintainer PFX when BAYTBEAM_WINDOWS_* secrets are configured; the public certificate is included as baytbeam-code-signing.cer. macOS and iOS remain unsigned without Apple credentials. GitHub Actions run Rust tests for Home Hub mTLS identity, unauthorized group events, guest expiry, independent transfer approval, Stream & Browse approval gates, traversal protection, Range streaming, empty files, and revoke before packaging.
           EOF
 
       - name: Create release and upload assets
@@ -481,6 +550,6 @@ jobs:
         run: |
           gh release create "${{ env.RELEASE_TAG }}" \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "LocalSend Home Hub ${{ env.RELEASE_TAG }}" \
+            --title "BaytBeam Home Hub ${{ env.RELEASE_TAG }}" \
             --notes-file RELEASE_NOTES.md \
             release-assets/*
